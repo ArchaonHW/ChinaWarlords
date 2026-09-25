@@ -16,6 +16,7 @@
 // 存檔只發生在章節邊界——戰中不存檔（架構§Save/Load）。
 
 #include "Campaign/ChapterState.h"
+#include "Campaign/CooperationDynamics.h"
 #include "Campaign/Governance.h"
 #include "Campaign/MythLayer.h"
 #include "Campaign/PeaceHazard.h"
@@ -51,6 +52,15 @@ public:
     // PPAH 和平/崩壞競爭風險層：章節邊界抽樣首達吸收態
     PeaceHazard& Peace() { return peace; }
     const PeaceHazard& Peace() const { return peace; }
+    // UGSP 合作演化層：複製方程驅動的合作人口比例
+    CooperationDynamics& Coop() { return coop; }
+    const CooperationDynamics& Coop() const { return coop; }
+
+    // UGSP §8：戰鬥層把當場情報不對稱（Jaccard 距離 0..1）
+    // 存入——下次 AdvanceChapter 消費後清零（逐場逐清）
+    void SetIntelAsymmetry(float a) {
+        intelAsymmetry = a < 0.0f ? 0.0f : (a > 1.0f ? 1.0f : a);
+    }
 
     // 弧/章節id/已收服戰線（章節序由帳本管，AdvanceChapter 同步）
     ChapterState chapter;
@@ -71,6 +81,8 @@ private:
     MythLayer myth;             // D-1 滲透狀態機（myth_layer 段）
     PlayerDeck deck;            // G-2 牌庫掠奪（player_deck 段）
     PeaceHazard peace;          // PPAH 首達時層（peace_hazard 段）
+    CooperationDynamics coop;   // UGSP 合作層（coop_dynamics 段）
+    float intelAsymmetry = 0.0f; // 逐場情報差（runtime，非存檔）
 };
 
 } // namespace Campaign

@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
            runs, chapters, seed, slope);
 
     int peace = 0, collapse = 0, unresolved = 0;
-    double sumPeaceHaz = 0.0, sumCollHaz = 0.0;
+    double sumPeaceHaz = 0.0, sumCollHaz = 0.0, sumCoop = 0.0;
     for (int i = 0; i < runs; ++i) {
         CampaignState c;
         c.Peace().Seed(seed + (unsigned)i);
@@ -45,6 +45,7 @@ int main(int argc, char** argv) {
         }
         sumPeaceHaz += c.Peace().CumulativePeaceHazard();
         sumCollHaz += c.Peace().CumulativeCollapseHazard();
+        sumCoop += c.Coop().Share();
         switch (c.Peace().GetOutcome()) {
         case PeaceHazard::Outcome::StablePeace: ++peace; break;
         case PeaceHazard::Outcome::Collapse: ++collapse; break;
@@ -57,7 +58,8 @@ int main(int argc, char** argv) {
            peace, 100.0 * peace / runs, collapse,
            100.0 * collapse / runs, unresolved,
            100.0 * unresolved / runs);
-    printf("平均累積 hazard: Λ_P=%.3f Λ_C=%.3f\n",
-           sumPeaceHaz / runs, sumCollHaz / runs);
+    printf("平均累積 hazard: Λ_P=%.3f Λ_C=%.3f  "
+           "平均合作比例 x̄=%.3f\n",
+           sumPeaceHaz / runs, sumCollHaz / runs, sumCoop / runs);
     return 0;
 }

@@ -41,6 +41,8 @@ public:
         float civilOrder = 0.5f;      // 秩序
         float depravity = 0.0f;       // 墮落（ratchet）
         float seepagePressure = 0.0f; // 神話滲透壓力
+        float cooperation = 0.5f;     // UGSP：合作人口比例 x
+        float infoAsymmetry = 0.0f;   // UGSP：情報 Jaccard 距離
     };
 
     // 由治理帳 + 滲透壓力組特徵（呼叫端把 MythLayer pressure
@@ -55,6 +57,8 @@ public:
         float order;
         float depravity;
         float seepage;
+        float coop; // UGSP 合作比例
+        float asym; // UGSP 情報不對稱（資訊租→崩壞壓力）
     };
 
     PeaceHazard() = default;
@@ -89,9 +93,10 @@ public:
     // λ_P≈softplus(−1.5)≈0.20/章、λ_C≈softplus(−5.25)≈0.005/章；
     // 民心秩序歸零+墮落滿格時 λ_C 反超。
     static constexpr Coefs kPeaceCoefs = {-3.0f, +1.5f, +1.5f,
-                                          -1.0f, -1.0f};
+                                          -1.0f, -1.0f, +1.0f, +0.0f};
     static constexpr Coefs kCollapseCoefs = {-4.0f, -1.0f, -1.5f,
-                                             +2.0f, +1.5f};
+                                             +2.0f, +1.5f, -0.8f,
+                                             +1.2f};
 
 private:
     std::mt19937 rng{0};

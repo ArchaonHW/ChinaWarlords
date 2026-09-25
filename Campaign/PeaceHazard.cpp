@@ -31,7 +31,9 @@ static float ApplyCoefs(const PeaceHazard::Coefs& c,
                                  c.support * f.popularSupport +
                                  c.order * f.civilOrder +
                                  c.depravity * f.depravity +
-                                 c.seepage * f.seepagePressure);
+                                 c.seepage * f.seepagePressure +
+                                 c.coop * f.cooperation +
+                                 c.asym * f.infoAsymmetry);
 }
 
 float PeaceHazard::LambdaPeace(const Features& f) const {

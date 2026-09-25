@@ -2,7 +2,7 @@
 title: 'Fix unreachable GovernanceEvent::Atrocity branch (routed-enemy massacre)'
 type: 'bugfix'
 created: '2026-09-25'
-status: 'ready-for-dev'
+status: 'in-review'
 review_loop_iteration: 0
 followup_review_recommended: false
 context:

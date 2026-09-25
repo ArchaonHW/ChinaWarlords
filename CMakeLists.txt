@@ -436,6 +436,7 @@ add_library(Campaign STATIC
     Campaign/Governance.cpp
     Campaign/MythLayer.cpp
     Campaign/PeaceHazard.cpp
+    Campaign/CooperationDynamics.cpp
     Campaign/FateExchange.cpp
     Campaign/NoBattleResolver.cpp
     Campaign/EndingPage.cpp
@@ -941,6 +942,11 @@ add_executable(PeaceDynamicsSim Examples/PeaceDynamicsSim.cpp)
 target_include_directories(PeaceDynamicsSim PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(PeaceDynamicsSim Campaign)
 
+# UGSP 第二層：情報不對稱 + 合作複製方程無頭測試
+add_executable(GroundStateTest Examples/GroundStateTest.cpp)
+target_include_directories(GroundStateTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(GroundStateTest Campaign)
+
 # D-2 神社與精靈實體無頭測試（佔領觸發/選擇入帳/favor 回呼接線）
 add_executable(ShrineFieldTest Examples/ShrineFieldTest.cpp)
 target_include_directories(ShrineFieldTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -1306,6 +1312,7 @@ set(POTATO_TESTS
     GovernanceFieldTest
     MythLayerTest
     PeaceHazardTest
+    GroundStateTest
     ShrineFieldTest
     FateExchangeTest
     MythIncursionTest
