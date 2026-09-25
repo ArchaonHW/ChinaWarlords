@@ -66,6 +66,7 @@ Findings deferred from `spec-ide-dev-assistant` review (iteration 1). All items 
 - source_spec: `_bmad-output/implementation-artifacts/spec-quantum-plan-effects.md`
   summary: DetectGovernanceEvents Atrocity branch unreachable — rout skips damage so members never drop after routing, and the killing blow clears IsRouting before detection runs; hardcodes `team != 0` as enemy.
   evidence: Blind-hunter + edge-case layers verified in BattleController.cpp ~L275-295/780; belongs to parallel C-2 governance work.
+  resolution: 已修（2026-09-25）：ResolveCombat 改為「潰逃目標僅被明確 Engage 點名時吃單向傷害」（鄰接不波及——憐憫仍為預設，追殺是可歸責指令）；DetectGovernanceEvents 改 map-first 排序，全滅清旗標後仍記暴行一次；Intervene(Engage) 放行潰逃目標。team 常數仍是 0/1 約定（獨立 deferred 項未動）。GovernanceTest [5-7] 覆蓋追殺/全滅/鄰接三路徑。spec-atrocity-detection-fix.md。
 - source_spec: `_bmad-output/implementation-artifacts/spec-quantum-plan-effects.md`
   summary: Unrest events appended to chronicler after its display window closes — strings silently swallowed.
   evidence: DuanqiaoPlayable.cpp ~L1733-1736; parallel governance UI work.

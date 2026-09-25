@@ -151,7 +151,9 @@ bool BattleController::Intervene(Squad* squad, SquadOrder order,
     if (order != SquadOrder::Engage && target) {
         return Intervene(squad, order, target->GetPosition(), holdSeconds);
     }
-    if (!target || target->IsEliminated() || target->IsRouting() ||
+    // 允許 Engage 潰逃中的敵隊——追殺是合法指令，損員由
+    // DetectGovernanceEvents 記暴行入帳
+    if (!target || target->IsEliminated() ||
         target == squad || (squad && target->GetTeam() == squad->GetTeam()) ||
         IsHiddenByFog(*target)) {
         return false;
@@ -313,19 +315,20 @@ void BattleController::DetectGovernanceEvents() {
         // 只評敵軍（team 1）——第三方神話隊（team>=2）潰逃/被補刀
         // 不進治理帳：鬼軍不是「投降的敵軍」，記受降/暴行是幻影入帳
         if (s->GetTeam() != 1) continue;
-        if (!s->IsRouting()) continue;
         auto it = govRoutMembers.find(s.get());
         if (it == govRoutMembers.end()) {
+            if (!s->IsRouting()) continue;
             // 新潰逃敵隊：受降（任其生還不追殺）+ 記錄潰逃時員額
             govRoutMembers[s.get()] = s->GetMembers();
             RecordGovernanceEvent(GovernanceEvent::SurrenderAccepted);
-        } else if (s->GetMembers() < it->second &&
-                   !govAtrocityDone.count(s.get())) {
-            // 潰逃中續損員 = 屠殺已降之敵，每隊只記一次
-            govAtrocityDone.insert(s.get());
-            it->second = s->GetMembers();
-            RecordGovernanceEvent(GovernanceEvent::Atrocity);
         } else {
+            // 已記帳的潰逃隊：損員即暴行——含全滅（ApplyCasualties
+            // 全滅時清 routing 旗標，故不能用 IsRouting 當守門）
+            if (s->GetMembers() < it->second &&
+                !govAtrocityDone.count(s.get())) {
+                govAtrocityDone.insert(s.get());
+                RecordGovernanceEvent(GovernanceEvent::Atrocity);
+            }
             it->second = s->GetMembers();
         }
     }
@@ -816,8 +819,30 @@ void BattleController::ResolveCombat(float dt) {
         }
         for (size_t j = i + 1; j < squads.size(); ++j) {
             Squad* b = squads[j].get();
-            if (b->IsEliminated() || b->IsRouting() ||
-                a->GetTeam() == b->GetTeam()) {
+            if (b->IsEliminated() || a->GetTeam() == b->GetTeam()) {
+                continue;
+            }
+            // 潰逃者不會反擊（GetAttackDPS=0），也不再被鄰近自動
+            // 波及——只有被明確 Engage 點名追殺時才吃單向傷害，
+            // 讓「任其生還/追殺已降」成為可歸責的指令行為
+            // （DetectGovernanceEvents 據損員記暴行）
+            if (b->IsRouting()) {
+                if (a->GetOrder() == SquadOrder::Engage &&
+                    a->GetEngageTarget() == b &&
+                    (a->GetPosition() - b->GetPosition()).Length() <=
+                        a->GetEngageRange() &&
+                    (!fog || !IsHiddenByFog(*b))) {
+                    if (combatWidth <= 0 ||
+                        attackersOn[b] < combatWidth) {
+                        damageBuffer[b] +=
+                            a->GetAttackDPS() *
+                            CounterMultiplier(a->GetUnitClass(),
+                                              b->GetUnitClass()) *
+                            terrainFactor(a, b) * dt;
+                        ++attackersOn[b];
+                    }
+                    b->SetUnderAttack(true);
+                }
                 continue;
             }
             // 霧中未揭露的小隊對敵方不可見——engageRange 大於

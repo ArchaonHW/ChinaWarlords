@@ -181,6 +181,107 @@ int main() {
         std::remove(path.c_str());
     }
 
+    // ---- [5] 追殺暴行：Engage 潰逃隊的單向傷害路徑 ----
+    // 修法前暴行支線是死碼：ResolveCombat 跳過潰逃目標、
+    // Intervene 拒絕 Engage 潰兵——屠殺永遠不可能。
+    printf("\n[5] 追殺暴行路徑\n");
+    {
+        BattleController battle(10, 10, 1.0f);
+        battle.SetCommandPoints(0, 10);
+        Squad* hunter =
+            battle.CreateSquad("追兵", 0, Vector2(5, 5), 10);
+        hunter->SetDamagePerMember(2.0f); // 20 dps
+        hunter->SetSpeed(10.0f);          // 追上 1.2x 潰兵
+        Squad* router =
+            battle.CreateSquad("潰兵", 1, Vector2(5.2f, 5), 10);
+        // 另一隊敵軍保持戰鬥力，防勝負提前翻讓 Update no-op
+        Squad* anchor =
+            battle.CreateSquad("敵主力", 1, Vector2(9, 9), 10);
+        // 旁觀的友軍：未 Engage 潰兵，不該造成傷害（憐憫路徑）
+        Squad* bystander =
+            battle.CreateSquad("旁觀者", 0, Vector2(5.4f, 5), 10);
+        bystander->SetDamagePerMember(50.0f);
+        (void)anchor;
+        battle.SetRallyPoint(1, Vector2(0, 0));
+        battle.BeginExecution();
+
+        router->AdjustMorale(-1.0f); // 士氣歸零 → routing
+        battle.Update(0.1f);
+        auto& evs = battle.GetGovernanceEvents();
+        Check(EvCount(evs, GovernanceEvent::SurrenderAccepted) == 1,
+              "潰逃先記受降");
+
+        // 明示 Engage：追殺是合法可歸責指令
+        Check(battle.Intervene(hunter, SquadOrder::Engage, router),
+              "Engage 潰逃隊受理");
+        Check(battle.GetCommandPoints(0) == 9, "追殺扣 1 CP");
+
+        // 追兵單向輸出：潰兵損員 → Atrocity 恰一次
+        for (int i = 0; i < 40 && !router->IsEliminated(); ++i) {
+            battle.Update(0.1f);
+        }
+        Check(EvCount(evs, GovernanceEvent::Atrocity) == 1,
+              "追殺損員 → Atrocity×1");
+        Check(router->GetMembers() < 10, "潰兵確實損員");
+        Check(bystander->GetMembers() == 10, "潰兵零輸出（無反擊）");
+    }
+
+    // ---- [6] killing blow：潰逃中被全滅仍記暴行 ----
+    // ApplyCasualties 全滅時清 routing 旗標——偵測若先看
+    // IsRouting 會漏掉最後一刀
+    printf("\n[6] 全滅暴行\n");
+    {
+        BattleController battle(10, 10, 1.0f);
+        battle.SetCommandPoints(0, 10);
+        Squad* hunter =
+            battle.CreateSquad("追兵", 0, Vector2(5, 5), 10);
+        hunter->SetDamagePerMember(30.0f); // 300 dps，快速全滅
+        hunter->SetSpeed(10.0f);
+        Squad* router =
+            battle.CreateSquad("潰兵", 1, Vector2(5.2f, 5), 6);
+        Squad* anchor =
+            battle.CreateSquad("敵主力", 1, Vector2(9, 9), 10);
+        (void)anchor;
+        battle.SetRallyPoint(1, Vector2(0, 0));
+        battle.BeginExecution();
+
+        router->AdjustMorale(-1.0f);
+        battle.Update(0.1f);
+        battle.Intervene(hunter, SquadOrder::Engage, router);
+        for (int i = 0; i < 40 && !router->IsEliminated(); ++i) {
+            battle.Update(0.1f);
+        }
+        auto& evs = battle.GetGovernanceEvents();
+        Check(router->IsEliminated(), "潰兵被追殺至全滅");
+        Check(EvCount(evs, GovernanceEvent::Atrocity) == 1,
+              "全滅仍記 Atrocity×1（旗標已清也逮得到）");
+    }
+
+    // ---- [7] 憐憫路徑：無人點名追殺則潰兵不損員 ----
+    printf("\n[7] 鄰接不追殺\n");
+    {
+        BattleController battle(10, 10, 1.0f);
+        Squad* near_ =
+            battle.CreateSquad("近敵", 0, Vector2(5.2f, 5), 10);
+        near_->SetDamagePerMember(50.0f);
+        Squad* router =
+            battle.CreateSquad("潰兵", 1, Vector2(5.4f, 5), 10);
+        Squad* anchor =
+            battle.CreateSquad("敵主力", 1, Vector2(9, 9), 10);
+        (void)anchor;
+        battle.SetRallyPoint(1, Vector2(0, 0));
+        battle.BeginExecution();
+        router->AdjustMorale(-1.0f);
+        // 近敵只站崗（未 Engage）：潰兵鄰接不受傷害
+        for (int i = 0; i < 10; ++i) battle.Update(0.1f);
+        auto& evs = battle.GetGovernanceEvents();
+        Check(router->GetMembers() == 10, "潰兵鄰接零傷害");
+        Check(EvCount(evs, GovernanceEvent::Atrocity) == 0,
+              "無追殺指令無暴行");
+        Check(EvCount(evs, GovernanceEvent::SurrenderAccepted) == 1,
+              "受降仍記一次");
+    }
+
     printf("\n=== 結果: %s ===\n", failures == 0 ? "全部 PASS" : "有 FAIL");
     return failures == 0 ? 0 : 1;
 }
