@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+# MingGoRTS Commit-msg Hook
+# 檢查 commit message 是否符合 Conventional Commits 格式
+#
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+commit_msg_file="$1"
+commit_msg=$(head -n 1 "$commit_msg_file")
+
+valid_types="feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert"
+if ! echo "$commit_msg" | grep -qE "^($valid_types)(\([^)]*\))?: .+"; then
+    echo "${RED}❌ Invalid commit message format!${NC}"
+    echo ""
+    echo "Commit message must follow Conventional Commits:"
+    echo "  <type>(<scope>): <subject>"
+    echo ""
+    echo "Valid types: $valid_types"
+    echo ""
+    echo "Examples:"
+    echo "  feat(sage): implement three authority system"
+    echo "  fix(ai): resolve image generation timeout"
+    echo "  docs: update README"
+    exit 1
+fi
+
+msg_length=${#commit_msg}
+if [ $msg_length -gt 100 ]; then
+    echo "${YELLOW}⚠️  Commit message too long ($msg_length > 100 chars)${NC}"
+fi
+
+echo "${GREEN}✓ Commit message format valid${NC}"
+exit 0
