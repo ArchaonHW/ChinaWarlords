@@ -52,6 +52,9 @@ endif()
 # （無 git/網路或非 ASCII 路徑環境下 FetchContent 會失敗；Gameplay 層本來就不需要 GL）
 option(POTATO_BUILD_GUI "Fetch glfw/glad and build GUI targets" ON)
 
+# potato_test_* / CTest 註冊——關閉可加速純庫建置（CI 預設 ON 並跑 ctest）
+option(POTATO_TESTS "Build potato_test_* targets and register them with CTest" ON)
+
 if(POTATO_BUILD_GUI)
 # glfw/glad 皆為 C 源碼——頂層 project() 僅啟用 CXX，此處按需啟用
 enable_language(C)
@@ -394,12 +397,12 @@ target_include_directories(PotatoGameplay PUBLIC ${CMAKE_SOURCE_DIR})
 # 無法編譯（MSVC 專用寫法）；leaf 模組僅以標頭形式提供。待引擎修復或拆出
 # 獨立 leaf target 後再恢復連結。
 
+if(POTATO_TESTS)
 # Headless 煙霧測試：固定種子決定性 tick
 add_executable(potato_test_gameplay Examples/potato_test_gameplay.cpp)
 target_include_directories(potato_test_gameplay PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(potato_test_gameplay PotatoGameplay)
 
-# TODO: POTATO_TESTS 清單為規劃項——目前以 CTest 直接註冊遊戲層測試
 # JsonValue DOM parser + potato.<name>/<ver> schema gate 測試
 add_executable(potato_test_json Examples/potato_test_json.cpp)
 target_include_directories(potato_test_json PRIVATE ${CMAKE_SOURCE_DIR})
@@ -487,6 +490,7 @@ add_executable(potato_test_governance Examples/potato_test_governance.cpp)
 target_include_directories(potato_test_governance PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(potato_test_governance PotatoGameplay)
 add_test(NAME potato_test_governance COMMAND potato_test_governance)
+endif() # POTATO_TESTS
 
 # Replay-verifier CLI: potato_verify <record.json> -> VERIFY OK/FAIL
 add_executable(potato_verify Examples/potato_verify.cpp)
@@ -501,7 +505,11 @@ file(GLOB_RECURSE CAMPAIGN_HEADERS CONFIGURE_DEPENDS "Campaign/*.h")
 add_library(PotatoCampaign STATIC ${CAMPAIGN_SOURCES} ${CAMPAIGN_HEADERS})
 target_include_directories(PotatoCampaign PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(PotatoCampaign PUBLIC PotatoGameplay)
+# Story 13.2 — QuantumOracle adapter: PRIVATE so Quantum/ headers
+# never reach Campaign consumers; symbols still resolve at link.
+target_link_libraries(PotatoCampaign PRIVATE PotatoQuantum)
 
+if(POTATO_TESTS)
 # Story 2.1 — five-account double-entry ledger
 add_executable(potato_test_ledger Examples/potato_test_ledger.cpp)
 target_include_directories(potato_test_ledger PRIVATE ${CMAKE_SOURCE_DIR})
@@ -510,9 +518,6 @@ add_test(NAME potato_test_ledger COMMAND potato_test_ledger)
 
 # Story 3.1 — CampaignState facade (potato.campaign/1)
 add_executable(potato_test_campaign Examples/potato_test_campaign.cpp)
-# Epic 13.2 — QuantumOracle adapter: PRIVATE so Quantum/ headers
-# never reach Campaign consumers; symbols still resolve at link.
-target_link_libraries(PotatoCampaign PRIVATE PotatoQuantum)
 target_include_directories(potato_test_campaign PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(potato_test_campaign PotatoCampaign)
 add_test(NAME potato_test_campaign COMMAND potato_test_campaign)
@@ -578,6 +583,7 @@ add_executable(potato_test_narrative Examples/potato_test_narrative.cpp)
 target_include_directories(potato_test_narrative PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(potato_test_narrative PotatoCampaign)
 add_test(NAME potato_test_narrative COMMAND potato_test_narrative)
+endif() # POTATO_TESTS
 
 # Story 11.4 — chain/outbox exporter: fixture producer for the
 # external relayer (Tools/MintRelayer/) and the demo path.
@@ -599,6 +605,7 @@ add_library(PotatoGame STATIC ${GAME_SOURCES} ${GAME_HEADERS})
 target_include_directories(PotatoGame PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(PotatoGame PUBLIC PotatoCampaign)
 
+if(POTATO_TESTS)
 # Story 8.1 — sprite atlas + software map rendering
 add_executable(potato_test_render Examples/potato_test_render.cpp)
 target_include_directories(potato_test_render PRIVATE ${CMAKE_SOURCE_DIR})
@@ -610,6 +617,7 @@ add_executable(potato_test_overworld Examples/potato_test_overworld.cpp)
 target_include_directories(potato_test_overworld PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(potato_test_overworld PotatoGame)
 add_test(NAME potato_test_overworld COMMAND potato_test_overworld)
+endif() # POTATO_TESTS
 
 if(POTATO_BUILD_GUI)
 # Windowed shell — the only target that may see glfw/glad/imgui.
@@ -621,6 +629,7 @@ target_link_libraries(potato_game
     PotatoGame glfw glad imgui ${OPENGL_LIBRARIES})
 endif()
 
+if(POTATO_TESTS)
 # CLI end-to-end: emit a sealed record, then verify it (exit-code check).
 add_test(NAME potato_record_emit
     COMMAND potato_test_record --emit ${CMAKE_BINARY_DIR}/verify_sample.json)
@@ -634,6 +643,7 @@ if(WIN32)
         COMMAND powershell -NoProfile -File ${CMAKE_SOURCE_DIR}/scripts/CheckGameplayDeps.ps1
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
+endif() # POTATO_TESTS
 
 # 安裝 (暫時禁用)
 # install(TARGETS PotatoEngine SimpleExample PlatformTest
