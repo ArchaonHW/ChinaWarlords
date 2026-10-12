@@ -105,7 +105,7 @@ warnings=0
 if [ -z "$files" ]; then
     echo "${GREEN}✓ No C++ files to check${NC}"
 else
-    echo "Checking $($files | wc -l) C++ file(s)..."
+    echo "Checking $(echo "$files" | wc -l) C++ file(s)..."
     
     # 檢查每個文件
     
@@ -115,9 +115,9 @@ else
             continue
         fi
         
-        # 檢查 1: 亂碼字符（基本檢查）
-        if grep -q '' "$file" 2>/dev/null; then
-            echo "${RED}❌ $file: Contains invalid characters (encoding issue)${NC}"
+        # 檢查 1: 亂碼字符（UTF-8 取代字元 U+FFFD = 解碼失敗的產物）
+        if LC_ALL=C grep -q $'\xef\xbf\xbd' "$file" 2>/dev/null; then
+            echo "${RED}❌ $file: Contains U+FFFD replacement character (encoding issue)${NC}"
             errors=$((errors + 1))
         fi
         

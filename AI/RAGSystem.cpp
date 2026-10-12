@@ -15,6 +15,16 @@
 namespace Potato {
 namespace AI {
 
+namespace {
+
+// ASCII-only tolower——非 ASCII 位元組（UTF-8 多位元組）原樣保留；
+// signed char 負值進 ::tolower 是 UB（MSVC CRT 會 assert）
+char AsciiToLower(char c) {
+    return (c >= 'A' && c <= 'Z') ? static_cast<char>(c + ('a' - 'A')) : c;
+}
+
+}  // namespace
+
 // ============================================================================
 // In-Memory Vector Database Implementation
 // ============================================================================
@@ -102,7 +112,7 @@ std::vector<DocumentChunk> InMemoryVectorDB::SearchByKeyword(
     std::vector<std::pair<int, DocumentChunk>> scoredChunks;
     
     std::string lowerKeyword = keyword;
-    std::transform(lowerKeyword.begin(), lowerKeyword.end(), lowerKeyword.begin(), ::tolower);
+    std::transform(lowerKeyword.begin(), lowerKeyword.end(), lowerKeyword.begin(), AsciiToLower);
     
     if (lowerKeyword.empty()) {
         return {};
@@ -110,7 +120,7 @@ std::vector<DocumentChunk> InMemoryVectorDB::SearchByKeyword(
     
     for (auto& chunk : chunks) {
         std::string lowerContent = chunk.content;
-        std::transform(lowerContent.begin(), lowerContent.end(), lowerContent.begin(), ::tolower);
+        std::transform(lowerContent.begin(), lowerContent.end(), lowerContent.begin(), AsciiToLower);
         
         // Count keyword occurrences
         size_t pos = 0;
@@ -225,7 +235,9 @@ std::unordered_map<std::string, std::string> DocumentProcessor::ExtractMetadata(
     
     // Extract basic metadata
     metadata["length"] = std::to_string(content.length());
-    metadata["word_count"] = std::to_string(std::count_if(content.begin(), content.end(), ::isspace) + 1);
+    // isspace 只吃 unsigned char——UTF-8 負值 char 是 UB（MSVC CRT assert）
+    metadata["word_count"] = std::to_string(std::count_if(content.begin(), content.end(),
+        [](char c) { return std::isspace(static_cast<unsigned char>(c)) ? 1 : 0; }) + 1);
     
     return metadata;
 }
@@ -338,10 +350,12 @@ std::vector<DocumentChunk> RAGSystem::Retrieve(
     stats.totalQueries++;
     stats.totalRetrievals++;
     
-    // Generate query embedding
+    // Generate query embedding（無 LLM client 時為空——Keyword/BM25
+    // 不需要 embedding,Hybrid 降級為純 keyword）
     std::vector<float> queryEmbedding = GenerateQueryEmbedding(query);
+    const bool hasEmbedding = !queryEmbedding.empty();
     
-    if (queryEmbedding.empty()) {
+    if (!hasEmbedding && config.strategy == RetrievalStrategy::Semantic) {
         return std::vector<DocumentChunk>();
     }
     
@@ -358,6 +372,10 @@ std::vector<DocumentChunk> RAGSystem::Retrieve(
             break;
             
         case RetrievalStrategy::Hybrid: {
+            if (!hasEmbedding) {
+                results = vectorDB->SearchByKeyword(query, topK);
+                break;
+            }
             // Combine semantic and keyword search
             auto semanticResults = vectorDB->Search(queryEmbedding, topK * 2, config.similarityThreshold);
             auto keywordResults = vectorDB->SearchByKeyword(query, topK * 2);
@@ -524,6 +542,14 @@ RAGSystem::RAGStats RAGSystem::GetStats() const {
     return stats;
 }
 
+size_t RAGSystem::GetDocumentCount() const {
+    return vectorDB->GetDocumentCount();
+}
+
+size_t RAGSystem::GetChunkCount() const {
+    return vectorDB->GetChunkCount();
+}
+
 void RAGSystem::ResetStats() {
     memset(&stats, 0, sizeof(stats));
 }
@@ -599,12 +625,11 @@ bool KnowledgeBase::Import(const std::string& filePath) {
 }
 
 size_t KnowledgeBase::GetDocumentCount() const {
-    // Need to expose this from RAGSystem
-    return 0;
+    return ragSystem->GetDocumentCount();
 }
 
 size_t KnowledgeBase::GetChunkCount() const {
-    // Need to expose this from RAGSystem
+    return ragSystem->GetChunkCount();
     return 0;
 }
 
@@ -644,7 +669,7 @@ Document CreateDocumentFromFile(const std::string& filePath) {
 
 std::string NormalizeText(const std::string& text) {
     std::string normalized = text;
-    std::transform(normalized.begin(), normalized.end(), normalized.begin(), ::tolower);
+    std::transform(normalized.begin(), normalized.end(), normalized.begin(), AsciiToLower);
     normalized = std::regex_replace(normalized, std::regex("\\s+"), " ");
     return normalized;
 }

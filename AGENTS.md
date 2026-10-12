@@ -53,3 +53,11 @@ C++20 game engine (PotatoEngine) + greenfield game layer (MingGoRTS). Planning a
 - Tests DO run under CTest: `ctest -C Release` in `build/` — 14/14 pass (potato_test_* + potato_record_emit/potato_verify_cli + gameplay_dep_guard). `gameplay_dep_guard` requires `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser` (now set).
 - All targets build clean under MSVC as of 2026-10-12 (legacy AI/Security/IDE modules were repaired: undeclared members, stale duplicate tail in AIAgentSystem.cpp, missing class declarations, unsafe-C calls replaced with `_s` variants).
 - VS installer requested a reboot to finish; builds work without it, but reboot once when convenient.
+
+## Engine notes (synced from upstream PotatoEngine checkout, 2026-10-12)
+
+- `Rendering/` is now compiled as the `PotatoRendering` static lib (all `Rendering/*.cpp` + Logging/Scene/Platform-GLFW/Input sources; links `NeuralNetwork glad glfw imgui`). It contains the Godot-style server layer: `Core/RID.h` (RID handles, generational validation) → `Rendering/RenderingServer.h` + `RenderingServerDefault` (`CreateHeadless()` Dummy rasterizer / `CreateGL()` GL backend) → `RendererCanvasCull`/`RendererSceneCull` → `Rasterizer{Canvas,Scene}` (`GL` or `Dummy`). `AI/RenderAgentTools` registers ~25 `render_*` tools on ToolFramework so agents can draw via the headless server.
+- `POTATO_BUILD_GUI` semantics changed: vendored native libs (external/glfw, glad_gen, imgui) now build UNCONDITIONALLY (no network/context needed); the flag only gates windowed executables and the glfw FetchContent fallback. Headless builds still work — `-DPOTATO_BUILD_GUI=OFF` verified.
+- `AI/AgentChain` gained real dispatch: Tool nodes via `SetToolRegistry`, condition/loop/parallel subroutine nodes (`{var}` placeholders), `AgentGraph` topological exec, `intermediateResults` on ChainResult.
+- `MathUtils/RiemannZeta.h` (`Potato::RZ`) is the shared ζ/L numerical core for `RiemannExplorerTest` (rewritten) and `RiemannExplorer2Test`; `AI/ZetaAgentTools` exposes it to agents via ToolFramework (`ZetaAgentToolsTest`). All engine tests are ctest-registered under `POTATO_TESTS`.
+- Known environmental issue: `gameplay_dep_guard` CTest fails "Process not started" spawning powershell.exe despite RemoteSigned being set — script itself passes when run directly; suspected pending VS-installer reboot. Re-check after reboot.

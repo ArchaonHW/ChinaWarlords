@@ -48,23 +48,23 @@ if(POTATO_SECURITY_HARDENING)
     endif()
 endif()
 
-# GUI 依賴（glfw/glad/OpenGL）——headless 建置可用 -DPOTATO_BUILD_GUI=OFF 略過
-# （無 git/網路或非 ASCII 路徑環境下 FetchContent 會失敗；Gameplay 層本來就不需要 GL）
-option(POTATO_BUILD_GUI "Fetch glfw/glad and build GUI targets" ON)
+# GUI 依賴（glfw/glad/OpenGL）——headless 建置可用 -DPOTATO_BUILD_GUI=OFF
+# 略過窗口化執行檔與 FetchContent 回退路徑。vendored 原生庫
+# （external/glfw、external/glad_gen、external/imgui）無網路/git 需求、
+# 編譯也不需要 GL context，故不受此開關影響恆編——headless 的
+# RenderingServer（Dummy rasterizer）與 CPU 容器（Mesh/Texture）仍
+# 需它們的符號做連結期解析。
+option(POTATO_BUILD_GUI "Build windowed GL executables and allow glfw FetchContent fallback" ON)
 
 # potato_test_* / CTest 註冊——關閉可加速純庫建置（CI 預設 ON 並跑 ctest）
 option(POTATO_TESTS "Build potato_test_* targets and register them with CTest" ON)
 
-if(POTATO_BUILD_GUI)
 # glfw/glad 皆為 C 源碼——頂層 project() 僅啟用 CXX，此處按需啟用
 enable_language(C)
 
-# 查找依賴
-find_package(OpenGL REQUIRED)
-
 # GLFW - 窗口和輸入管理
-# 以 URL 擷取 source zip——GIT_REPOSITORY 需要 git，此環境沒有；
-# 若已預先 vendored 到 external/glfw 則直接使用（離線可建置）。
+# vendored 副本優先（離線可建置）；不存在時才走 FetchContent——
+# 該回退維持在 GUI 開關內，保住 OFF 語意（無 git/網路環境）。
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
@@ -74,7 +74,7 @@ set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
 if(EXISTS ${CMAKE_SOURCE_DIR}/external/glfw/CMakeLists.txt)
     add_subdirectory(external/glfw)
-else()
+elseif(POTATO_BUILD_GUI)
     include(FetchContent)
     FetchContent_Declare(
         glfw
@@ -86,7 +86,7 @@ else()
 endif()
 
 # GLAD - OpenGL 加載器（external/glad_gen 預生成——glad2 的
-# FetchContent 需要 git+python；此環境皆無，直接編譯 vendored 產物，
+# FetchContent 需要 git+python；直接編譯 vendored 產物，
 # 涵蓋 GL 3.3 core，符合引擎 Rendering/ 的 context 需求）
 add_library(glad STATIC external/glad_gen/src/glad.c)
 target_include_directories(glad PUBLIC
@@ -105,6 +105,10 @@ target_include_directories(imgui PUBLIC
     ${CMAKE_SOURCE_DIR}/external/imgui
     ${CMAKE_SOURCE_DIR}/external/imgui/backends)
 target_link_libraries(imgui PUBLIC glfw)
+
+if(POTATO_BUILD_GUI)
+# 查找依賴（窗口化執行檔才需要系統 GL）
+find_package(OpenGL REQUIRED)
 endif()
 
 # OpenAL - 音頻庫 (可選)
@@ -293,6 +297,69 @@ target_link_libraries(ToolFramework LLMIntegration)
 add_library(IntelligentDevelopmentSystem STATIC AI/IntelligentDevelopmentSystem.cpp)
 target_include_directories(IntelligentDevelopmentSystem PUBLIC ${CMAKE_SOURCE_DIR}/AI)
 target_link_libraries(IntelligentDevelopmentSystem LLMIntegration RAGSystem AgentChain ToolFramework AIAgentSystem NeuralNetwork NaturalLanguageProcessing)
+
+# 渲染模組（含 RenderingServer——Godot 式 RID server/culler/rasterizer
+# 分層，自上游 PotatoEngine 同步）。全部源碼上游驗證可編；GL 段僅需
+# vendored 標頭與函式庫（glad_gen/glfw/imgui 恆編），執行期才要 GL
+# context——headless 測試走 Dummy rasterizer 路徑。
+file(GLOB RENDERING_SOURCES CONFIGURE_DEPENDS "Rendering/*.cpp")
+add_library(PotatoRendering STATIC
+    ${RENDERING_SOURCES}
+    Logging/Logger.cpp
+    Logging/Log.cpp
+    Scene/SceneNode.cpp
+    Platform/GLFWSharedContext.cpp
+    Platform/PlatformSystem.cpp
+    Input/InputManager.cpp
+)
+target_include_directories(PotatoRendering PUBLIC ${CMAKE_SOURCE_DIR}
+    PRIVATE
+    ${CMAKE_SOURCE_DIR}/external/glad_gen/include
+    ${CMAKE_SOURCE_DIR}/external/glfw/include
+    ${CMAKE_SOURCE_DIR}/external/imgui
+    ${CMAKE_SOURCE_DIR}/external/tinygltf
+)
+target_link_libraries(PotatoRendering PUBLIC
+    NeuralNetwork glad glfw imgui ${OPENGL_LIBRARIES})
+
+# AI 增強模塊 - Agent 繪圖工具（RenderingServer ↔ ToolFramework 橋接；
+# Dummy rasterizer 下 agent 可無 GL 組裝並驗證場景）
+add_library(RenderAgentTools STATIC AI/RenderAgentTools.cpp)
+target_include_directories(RenderAgentTools PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries(RenderAgentTools ToolFramework PotatoRendering NeuralNetwork)
+
+# AI 增強模塊 - Agent 解析數論工具橋接（MathUtils/RiemannZeta ↔
+# ToolFramework；全 headless 純 CPU——ζ/L 求值、零點掃描、RH 等價判據）
+add_library(ZetaAgentTools STATIC AI/ZetaAgentTools.cpp)
+target_include_directories(ZetaAgentTools PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries(ZetaAgentTools ToolFramework)
+
+if(POTATO_TESTS)
+# RenderingServer——RID 代際、canvas 剔除/z-order、scene cull、
+# dummy rasterizer 指令流、agent 工具端到端（全 headless）
+add_executable(RenderingServerTest Examples/RenderingServerTest.cpp)
+target_include_directories(RenderingServerTest PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(RenderingServerTest PotatoRendering RenderAgentTools ToolFramework NeuralNetwork)
+add_test(NAME RenderingServerTest COMMAND RenderingServerTest)
+
+# 黎曼 ζ 探索——ZetaEM/RSZ 驗證 + 臨界帶地形圖（RiemannZeta.h 共用
+# 數值核心；ImageCodec 由 PotatoRendering 提供）
+add_executable(RiemannExplorerTest Examples/RiemannExplorerTest.cpp)
+target_include_directories(RiemannExplorerTest PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(RiemannExplorerTest PotatoRendering)
+add_test(NAME RiemannExplorerTest COMMAND RiemannExplorerTest)
+
+add_executable(RiemannExplorer2Test Examples/RiemannExplorer2Test.cpp)
+target_include_directories(RiemannExplorer2Test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(RiemannExplorer2Test PotatoRendering)
+add_test(NAME RiemannExplorer2Test COMMAND RiemannExplorer2Test)
+
+# ζ agent 工具端到端（headless——tool 註冊/參數校驗/求值管線）
+add_executable(ZetaAgentToolsTest Examples/ZetaAgentToolsTest.cpp)
+target_include_directories(ZetaAgentToolsTest PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(ZetaAgentToolsTest ZetaAgentTools ToolFramework)
+add_test(NAME ZetaAgentToolsTest COMMAND ZetaAgentToolsTest)
+endif() # POTATO_TESTS
 
 # MingGoRTS IDE 智能建議系統
 add_library(IntelligentSuggestion STATIC MingGoRTS_IDE/IntelligentSuggestion.cpp)

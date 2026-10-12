@@ -227,6 +227,10 @@ public:
     RAGStats GetStats() const;
     void ResetStats();
     
+    // 庫存量（KnowledgeBase::GetDocumentCount 轉接用）
+    size_t GetDocumentCount() const;
+    size_t GetChunkCount() const;
+    
 private:
     std::unique_ptr<IVectorDatabase> vectorDB;
     std::unique_ptr<DocumentProcessor> documentProcessor;

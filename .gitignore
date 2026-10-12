@@ -133,6 +133,9 @@ _bmad-output/
 .claude/
 progress/
 
+# 測試輸出工件（RiemannExplorerTest 臨界帶地形圖）
+/riemann_zeta.png
+
 # IDE / AI tool local configuration
 .windsurf/
 .devin/
