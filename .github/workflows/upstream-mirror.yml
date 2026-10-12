@@ -32,7 +32,7 @@ on:
       - 'external/glad_gen/**'
       - 'external/tinygltf/**'
       - 'Examples/**'
-      - 'tools/sync-potatoengine-upstream.sh'
+      - 'Tools/sync-potatoengine-upstream.sh'
   pull_request:
     branches: [ main, develop ]
     paths:
@@ -60,7 +60,7 @@ on:
       - 'external/glad_gen/**'
       - 'external/tinygltf/**'
       - 'Examples/**'
-      - 'tools/sync-potatoengine-upstream.sh'
+      - 'Tools/sync-potatoengine-upstream.sh'
   workflow_dispatch:
 
 permissions:
@@ -85,7 +85,7 @@ jobs:
         # token: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
 
     - name: Run sync script into upstream checkout
-      run: bash tools/sync-potatoengine-upstream.sh "$PWD/upstream"
+      run: bash Tools/sync-potatoengine-upstream.sh "$PWD/upstream"
 
     - name: Verify mirror is clean
       run: |
