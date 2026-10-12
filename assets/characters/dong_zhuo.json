@@ -1,0 +1,10 @@
+{
+    "schema": "potato.character/1",
+    "id": "dong_zhuo",
+    "name": "董卓",
+    "origin": "隴西",
+    "prior": "defensive",
+    "deck_seed": 7,
+    "deck": ["press_the_advance", "feint_east"],
+    "created": false
+}

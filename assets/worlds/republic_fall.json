@@ -1,0 +1,41 @@
+{
+    "schema": "potato.world/1",
+    "id": "republic_fall",
+    "name": "河山殘卷",
+    "nodes": [
+        {"id": "kaifeng", "name": "開封",
+         "terrain": ["road", "open"], "strategic": ["depot"],
+         "historical": ["grain_route"],
+         "control": "player", "map": "field",
+         "center": [80, 200]},
+        {"id": "zhengzhou", "name": "鄭州",
+         "terrain": ["road", "open"], "historical": ["telegraph"],
+         "control": "neutral",
+         "center": [220, 180]},
+        {"id": "huanghe", "name": "黃河渡口",
+         "terrain": ["river", "chokepoint"], "strategic": ["ferry"],
+         "control": "neutral",
+         "center": [150, 70]},
+        {"id": "longmen", "name": "龍門",
+         "terrain": ["highland"], "myth": ["shrine"],
+         "control": "neutral", "map": "field",
+         "center": [340, 140]},
+        {"id": "luoyang", "name": "洛陽",
+         "terrain": ["open"], "strategic": ["village"],
+         "control": "rival", "map": "field",
+         "center": [430, 200]},
+        {"id": "tongguan", "name": "潼關",
+         "terrain": ["chokepoint", "highland"],
+         "control": "rival",
+         "center": [560, 160]}
+    ],
+    "routes": [
+        {"a": "kaifeng", "b": "zhengzhou", "days": 1},
+        {"a": "kaifeng", "b": "huanghe", "days": 2},
+        {"a": "huanghe", "b": "zhengzhou", "days": 2},
+        {"a": "zhengzhou", "b": "longmen", "days": 2},
+        {"a": "longmen", "b": "luoyang", "days": 2},
+        {"a": "luoyang", "b": "tongguan", "days": 3}
+    ],
+    "start": "kaifeng"
+}

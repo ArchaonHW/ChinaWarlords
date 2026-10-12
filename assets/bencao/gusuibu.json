@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "gusuibu",
+  "category": "xicao",
+  "name": "骨碎補",
+  "aliases": ["猴薑", "石毛薑"],
+  "origin": "生江南，根著樹石上，有毛如薑。主破血續傷，能令碎骨得補，故名。",
+  "nature": "苦，溫。歸腎、肝經。",
+  "indications": "補腎強骨，續傷止痛。主折傷筋骨、耳鳴耳聾、牙齒疼痛、久瀉。",
+  "source": "本草綱目·草部卷二十·骨碎補",
+  "unlock": {"kind": "ledger_tag", "tag": "plunder"},
+  "lang": {"zh-tw": true}
+}

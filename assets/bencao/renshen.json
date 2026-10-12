@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "renshen",
+  "category": "shancao",
+  "name": "人參",
+  "aliases": ["人薓", "地精"],
+  "origin": "生上黨山谷及遼東，根如人形者有神。（或云：善價不貲，窮者不可得。）",
+  "nature": "甘、微苦，微溫。歸脾、肺、心經。",
+  "indications": "大補元氣，復脈固脫，補脾益肺，生津安神。主五臟不足、氣虛欲脫、脈微欲絕。",
+  "source": "本草綱目·草部卷十二·人參",
+  "unlock": {"kind": "governance", "event": "subversion"},
+  "lang": {"zh-tw": true}
+}

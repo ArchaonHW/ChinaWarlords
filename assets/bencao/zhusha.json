@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "zhusha",
+  "category": "jinshi",
+  "name": "硃砂",
+  "aliases": ["丹砂", "辰砂"],
+  "origin": "生符陵山谷，出辰州者最勝，色紅透光如箭鏃者為箭鏃砂。（或云：丹砂化汞，書吏以朱點勘帳目，疑者以朱圈之。）",
+  "nature": "甘，微寒。有毒。歸心經。",
+  "indications": "清心鎮驚，安神解毒。主心悸易驚、失眠多夢、癲狂驚癇、瘡瘍腫毒。",
+  "source": "本草綱目·金石部卷九·丹砂",
+  "unlock": {"kind": "myth_state", "state": "ghost_army"},
+  "lang": {"zh-tw": true}
+}

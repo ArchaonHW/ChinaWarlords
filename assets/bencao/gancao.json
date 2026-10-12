@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "gancao",
+  "category": "shancao",
+  "name": "甘草",
+  "aliases": ["國老", "蜜甘"],
+  "origin": "生河西川谷積沙山及上郡，春生苗，二月、八月采根曝乾。（或云：諸藥中非甘草不調，故有國老之號。）",
+  "nature": "甘，平。歸心、肺、脾、胃經。",
+  "indications": "補脾益氣，清熱解毒，祛痰止咳，緩急止痛，調和諸藥。主五臟六腑寒熱邪氣，解百藥毒。",
+  "source": "本草綱目·草部卷十二上·甘草",
+  "unlock": {"kind": "governance", "event": "governance_victory"},
+  "lang": {"zh-tw": true}
+}

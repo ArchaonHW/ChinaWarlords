@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "jingmi",
+  "category": "gucai",
+  "name": "粳米",
+  "aliases": ["穀芽", "蘗米"],
+  "origin": "稻米也，炊以為食；浸水令芽生則為穀芽，曝乾入藥。糧為軍中之命，芽為糧中之生機。",
+  "nature": "甘，平。歸脾、胃經。",
+  "indications": "補中益氣，健脾和胃，除煩止渴。主食積不消、腹脹泄瀉、脾虛少食。",
+  "source": "本草綱目·穀部卷二十二·粳",
+  "unlock": {"kind": "ledger_tag", "tag": "raid"},
+  "lang": {"zh-tw": true}
+}

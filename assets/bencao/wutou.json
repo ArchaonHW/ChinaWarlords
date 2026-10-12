@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "wutou",
+  "category": "ducao",
+  "name": "烏頭",
+  "aliases": ["奚毒", "兩頭尖"],
+  "origin": "與附子同株，其母也，生朗陵山谷。形似烏鳥之頭，故名。（或云：射罔之才，獵人以之傅鏃，中者立斃。）",
+  "nature": "辛，熱。有大毒。歸心、肝、腎、脾經。",
+  "indications": "祛風濕，溫經止痛。主風寒濕痺、心腹冷痛、寒疝作痛。",
+  "source": "本草綱目·草部卷十七下·烏頭",
+  "unlock": {"kind": "corruption", "at_least": 60},
+  "lang": {"zh-tw": true}
+}

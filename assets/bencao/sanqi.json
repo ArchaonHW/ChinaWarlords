@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "sanqi",
+  "category": "shancao",
+  "name": "三七",
+  "aliases": ["山漆", "金不換"],
+  "origin": "生廣西、雲南山峒深處，掘根暴乾，黃黑色、團結者佳。（或云：軍中謂之「金不換」，以其價重於金。）",
+  "nature": "甘、微苦，溫。歸肝、胃經。",
+  "indications": "止血散血，定痛。主金刃箭傷、跌扑杖瘡，血出不止者，嚼爛塗之或末摻之，血立止。",
+  "source": "本草綱目·草部卷十二·三七",
+  "unlock": {"kind": "governance", "event": "defeat"},
+  "lang": {"zh-tw": true}
+}

@@ -1,0 +1,15 @@
+{
+  "name": "potato-mint-relayer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Story 11.4 external relayer: scans the mint-claim outbox, re-validates every claim against the campaign ledger, writes a potato.relayer_report/1. Zero dependencies; web3 submission lands with the contract driver in Story 11.5.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "ethers": "^6.13.5",
+    "ganache": "^7.9.2",
+    "solc": "^0.8.28"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "cheqian",
+  "category": "xicao",
+  "name": "車前",
+  "aliases": ["當道", "牛遺"],
+  "origin": "生平澤丘陵阪道中，及江湖圃澤，五月五日采，陰乾。（或云：好生道邊及牛馬跡中，故名車前。）",
+  "nature": "甘，寒。歸肝、腎、肺、小腸經。",
+  "indications": "利水通淋，清熱明目，祛痰止咳。主淋癃尿閉、暑濕泄瀉、目赤腫痛。",
+  "source": "本草綱目·草部卷十六·車前",
+  "unlock": {"kind": "terrain", "terrain": "river"},
+  "lang": {"zh-tw": true}
+}

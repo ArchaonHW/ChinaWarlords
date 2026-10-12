@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "fulonggan",
+  "category": "jinshi",
+  "name": "伏龍肝",
+  "aliases": ["灶心土", "灶中黃土"],
+  "origin": "灶中對釜月下之黃土也，年久者良。（或云：灶有神司之，村焚而灶土存，神猶護其爨。）",
+  "nature": "辛，微溫。歸脾、胃經。",
+  "indications": "溫中止血，止嘔止瀉。主吐血衄血、便血崩漏、嘔逆反胃、妊娠惡阻。",
+  "source": "本草綱目·土部卷七·伏龍肝",
+  "unlock": {"kind": "ledger_tag", "tag": "atrocity"},
+  "lang": {"zh-tw": true}
+}

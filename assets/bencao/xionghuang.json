@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "xionghuang",
+  "category": "jinshi",
+  "name": "雄黃",
+  "aliases": ["黃食石", "石黃"],
+  "origin": "生武都山谷、敦煌山之陽，赤如雞冠、明徹不臭者良。（或云：端午以雄黃入酒，灑之門庭，可辟蛇蠱。）",
+  "nature": "辛、苦，溫。有毒。歸肝、胃經。",
+  "indications": "解毒殺蟲，燥濕祛痰。主癰疽疔瘡、蛇蟲咬傷、蟲積腹痛、驚癇瘧疾。",
+  "source": "本草綱目·金石部卷九·雄黃",
+  "unlock": {"kind": "myth_state", "state": "invasion"},
+  "lang": {"zh-tw": true}
+}

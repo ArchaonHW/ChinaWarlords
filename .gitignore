@@ -1,0 +1,138 @@
+# Potato Engine Git ignore
+
+# Compiled binary files
+*.dll
+*.exe
+*.so
+*.dylib
+*.o
+*.obj
+*.pdb
+*.ilk
+*.log
+*.vspscc
+*.vssscc
+*_i.c
+*_p.c
+*.idb
+*.suo
+*.user
+*.sln
+*.vcxproj*
+*.vcproj*
+*.ncb
+*.opensdf
+*.sdf
+*.sln.docstates
+*.cache
+*.pfx
+
+# CMake build outputs
+build/
+build-*/
+CMakeFiles/
+CMakeCache.txt
+CMakeScripts/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+*.cmake
+!external/**/*.cmake
+
+# CMake build directories
+bin/
+lib/
+*.a
+*.lib
+
+# Rider/Visual Studio
+.idea/
+.vscode/
+.vs/
+*.sln.iml
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.orig
+
+# Secrets & credentials - NEVER commit these
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.keystore
+*.jks
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.asc
+*.gpg
+credentials*
+secrets.*
+*.secret
+*.token
+
+# Crash reports
+*.crashdump
+*.dmp
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Java / Maven build outputs
+target/
+*.class
+*.jar
+
+# Potato Engine specific
+Logs/
+TestReports/
+Generated/
+Temp/
+Backup_*
+
+# MintRelayer (Story 11.4) — dev-wallet config & run artifacts
+Tools/MintRelayer/node_modules/
+*.local.json
+*.report.json
+*.report.json.tmp
+
+# Allow specific JSON files
+!tasks.json
+!**/tasks.json
+
+# Allow GitHub config files
+!.github/**/*.json
+!.github/**/*.yml
+!.github/**/*.md
+
+# BMAD / GDS / WDS agent frameworks (third-party — do not upload to GitHub)
+_bmad/
+_bmad-output/
+.agents/
+.claude/
+progress/
+
+# IDE / AI tool local configuration
+.windsurf/
+.devin/

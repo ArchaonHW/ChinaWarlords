@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "zisu",
+  "category": "xicao",
+  "name": "紫蘇",
+  "aliases": ["蘇", "桂荏"],
+  "origin": "處處有之，葉背紫者良，夏采莖葉，秋采子。（或云：水鄉食蟹，必以紫蘇解之。）",
+  "nature": "辛，溫。歸肺、脾經。",
+  "indications": "解表散寒，行氣和胃，解魚蟹毒。主風寒感冒、咳嗽嘔惡、魚蟹中毒。",
+  "source": "本草綱目·草部卷十四·紫蘇",
+  "unlock": {"kind": "terrain", "terrain": "water"},
+  "lang": {"zh-tw": true}
+}

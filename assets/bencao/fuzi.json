@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "fuzi",
+  "category": "ducao",
+  "name": "附子",
+  "aliases": ["黑附子", "烏頭附側"],
+  "origin": "生犍為山谷及廣漢，冬月采根為附子，春采為烏頭。附子附烏頭而生，如子附母。（或云：回陽之藥，亦殺人之藥，用者在權。）",
+  "nature": "辛、甘，大熱。有毒。歸心、腎、脾經。",
+  "indications": "回陽救逆，補火助陽，散寒止痛。主亡陽虛脫、肢冷脈微、陽痿宮冷、寒濕痺痛。",
+  "source": "本草綱目·草部卷十七下·附子",
+  "unlock": {"kind": "corruption", "at_least": 15},
+  "lang": {"zh-tw": true}
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "lingzhi",
+  "category": "chongshou",
+  "name": "靈芝",
+  "aliases": ["三秀", "茵芝"],
+  "origin": "生名山陰崖，六芝五色，各應其方。（或云：久食輕身不老，延年神仙——神祠既平，芝乃現形。）",
+  "nature": "甘，平。歸心、肺、肝、腎經。",
+  "indications": "補氣安神，止咳平喘。主虛勞短氣、心悸失眠、咳喘痰多。",
+  "source": "本草綱目·菜部卷二十八·芝",
+  "unlock": {"kind": "myth_state", "state": "infiltrated"},
+  "lang": {"zh-tw": true}
+}

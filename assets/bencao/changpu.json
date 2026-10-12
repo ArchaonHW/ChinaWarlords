@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "changpu",
+  "category": "manshui",
+  "name": "菖蒲",
+  "aliases": ["昌陽", "水劍草"],
+  "origin": "生上洛池澤及蜀郡嚴道，一寸九節者良。（或云：五月五日懸之門戶，其形如劍，可斬百邪。）",
+  "nature": "辛，溫。歸心、胃經。",
+  "indications": "開竅豁痰，醒神益智，化濕辟穢。主痰蒙清竅、神昏癲癇、健忘耳聾。",
+  "source": "本草綱目·草部卷十九·菖蒲",
+  "unlock": {"kind": "myth_state", "state": "pacify_shrine"},
+  "lang": {"zh-tw": true}
+}

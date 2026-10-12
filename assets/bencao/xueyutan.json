@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "xueyutan",
+  "category": "renbu",
+  "name": "血餘炭",
+  "aliases": ["亂髮炭", "髮灰"],
+  "origin": "人髮煆炭存性。（或云：人部之條，錄之以誌，非以為勸——戰場遺髮，焚以止血，書吏錄時掩卷。）",
+  "nature": "苦，平。歸肝、胃經。",
+  "indications": "止血化瘀，利尿。主吐血衄血、血淋便血、崩漏、小便不通。",
+  "source": "本草綱目·人部卷五十二·亂髮",
+  "unlock": {"kind": "governance", "event": "defeat"},
+  "lang": {"zh-tw": true}
+}

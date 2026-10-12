@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "xuduan",
+  "category": "xicao",
+  "name": "續斷",
+  "aliases": ["屬折", "接骨"],
+  "origin": "生常山山谷，七月、八月采，陰乾。以能續折傷筋骨，故名續斷。",
+  "nature": "苦、辛，微溫。歸肝、腎經。",
+  "indications": "補肝腎，續筋骨，止崩漏。主金瘡癰瘍、折跌傷損、筋骨斷絕。",
+  "source": "本草綱目·草部卷十五·續斷",
+  "unlock": {"kind": "chapter_close", "chapter": 3},
+  "lang": {"zh-tw": true}
+}

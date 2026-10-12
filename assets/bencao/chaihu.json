@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "chaihu",
+  "category": "shancao",
+  "name": "柴胡",
+  "aliases": ["地薰", "山菜"],
+  "origin": "生弘農川谷及冤句，二月、八月采根曝乾。（或云：和解之劑，不戰而解人也。）",
+  "nature": "苦、辛，微寒。歸肝、膽經。",
+  "indications": "和解退熱，疏肝解鬱，升舉陽氣。主傷寒邪在少陽、寒熱往來、胸脅苦滿。",
+  "source": "本草綱目·草部卷十三·柴胡",
+  "unlock": {"kind": "governance", "event": "subversion"},
+  "lang": {"zh-tw": true}
+}

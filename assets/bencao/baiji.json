@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "baiji",
+  "category": "shancao",
+  "name": "白及",
+  "aliases": ["連及草", "甘根"],
+  "origin": "生北山川谷及冤句、越山，葉如初生棕櫚，根如菱米，紫花。（或云：瘡家聖藥，能生肌補缺。）",
+  "nature": "苦、甘、澀，微寒。歸肺、胃、肝經。",
+  "indications": "收斂止血，消腫生肌。主咯血吐血、瘡瘍腫毒、金瘡出血、手足皸裂。",
+  "source": "本草綱目·草部卷十二·白及",
+  "unlock": {"kind": "governance", "event": "defeat"},
+  "lang": {"zh-tw": true}
+}

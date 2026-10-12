@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "jinyinhua",
+  "category": "manshui",
+  "name": "金銀花",
+  "aliases": ["忍冬", "鷺鷥藤"],
+  "origin": "處處有之，藤生，凌冬不凋，故名忍冬。花初開則白，二三日則黃，黃白相映，故曰金銀花。",
+  "nature": "甘，寒。歸肺、心、胃經。",
+  "indications": "清熱解毒，疏散風熱，涼血止痢。主癰疽疔毒、熱毒血痢、溫病發熱。",
+  "source": "本草綱目·草部卷十八·忍冬",
+  "unlock": {"kind": "terrain", "terrain": "river"},
+  "lang": {"zh-tw": true}
+}

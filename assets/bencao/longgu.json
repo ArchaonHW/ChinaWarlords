@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "longgu",
+  "category": "jinshi",
+  "name": "龍骨",
+  "aliases": ["白龍骨", "陸虎遺生"],
+  "origin": "生晉地川谷及太山巖水岸土穴中，死龍處得之。（或云：古之刻辭，骨上有字，後世磨以為藥——字滅而藥存。）",
+  "nature": "甘、澀，平。歸心、肝、腎經。",
+  "indications": "鎮驚安神，收斂固澀。主驚癇癲狂、失眠多夢、久瀉自汗、遺精帶下。",
+  "source": "本草綱目·鱗部卷四十三·龍骨",
+  "unlock": {"kind": "chapter_close", "chapter": 7},
+  "lang": {"zh-tw": true}
+}

@@ -1,0 +1,10 @@
+{
+    "schema": "potato.character/1",
+    "id": "guo_jia",
+    "name": "郭嘉",
+    "origin": "潁川",
+    "prior": "cunning",
+    "deck_seed": 108,
+    "deck": ["press_the_advance", "feint_east"],
+    "created": false
+}

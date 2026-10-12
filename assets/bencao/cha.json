@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "cha",
+  "category": "gucai",
+  "name": "茶",
+  "aliases": ["茗", "荈"],
+  "origin": "生益州川谷山陵道旁，凌冬不死，三月三日采。（或云：南人煮飲，可以療倦醒睡。）",
+  "nature": "苦、甘，涼。歸心、肺、胃經。",
+  "indications": "清頭目，除煩渴，消食化痰，利尿解毒。主昏睡多寐、心煩口渴、食積痰滯。",
+  "source": "本草綱目·果部卷三十二·茗",
+  "unlock": {"kind": "terrain", "terrain": "highland"},
+  "lang": {"zh-tw": true}
+}

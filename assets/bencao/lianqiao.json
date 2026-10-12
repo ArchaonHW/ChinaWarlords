@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "lianqiao",
+  "category": "xicao",
+  "name": "連翹",
+  "aliases": ["異翹", "蘭華"],
+  "origin": "生泰山山谷，八月采，陰乾。其翹首片片相連，故名連翹。",
+  "nature": "苦，微寒。歸肺、心、小腸經。",
+  "indications": "清熱解毒，消腫散結，疏散風熱。主瘡瘍瘰癧、溫熱初起、丹毒斑疹。",
+  "source": "本草綱目·草部卷十六·連翹",
+  "unlock": {"kind": "terrain", "terrain": "forest"},
+  "lang": {"zh-tw": true}
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "diyu",
+  "category": "xicao",
+  "name": "地榆",
+  "aliases": ["玉豉", "酸赭"],
+  "origin": "生桐柏及冤句山谷，二月、八月采根曝乾。（或云：燒燙之傷，敷之最驗。）",
+  "nature": "苦、酸，微寒。歸肝、大腸經。",
+  "indications": "涼血止血，解毒斂瘡。主便血痔血、血痢崩漏、水火燙傷、癰腫瘡毒。",
+  "source": "本草綱目·草部卷十二·地榆",
+  "unlock": {"kind": "ledger_tag", "tag": "atrocity"},
+  "lang": {"zh-tw": true}
+}

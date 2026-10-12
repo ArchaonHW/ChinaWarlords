@@ -1,0 +1,19 @@
+{
+  "schema": "potato.narrative/1",
+  "pack": "core",
+  "chapters": {
+    "ch01_duanqiao": {
+      "frontispiece": "爾其率師斷橋，遏彼驕兵，毋縱毋暴。",
+      "judgment": {
+        "clean": "斷橋一役，兵不血刃者寡，而師出有律。",
+        "tainted": "勝則勝矣，民瘼在冊，史筆難掩。",
+        "corrupt": "暴行在冊，雖勝猶辱。"
+      },
+      "cliffhanger": {
+        "blessed": "天命在我，東風將起",
+        "fading": "烽煙未熄，勝負未分",
+        "barren": "府庫已竭，來日大難"
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "ai",
+  "category": "xicao",
+  "name": "艾",
+  "aliases": ["冰臺", "醫草"],
+  "origin": "生田野，三月三日、五月五日采葉曝乾，陳久者良。（或云：端午懸門，可以辟疫。）",
+  "nature": "苦、辛，溫。歸肝、脾、腎經。",
+  "indications": "溫經止血，散寒止痛，外用灸百病。主吐血衄血、腹中冷痛、經寒不調。",
+  "source": "本草綱目·草部卷十五·艾",
+  "unlock": {"kind": "myth_state", "state": "pacify_shrine"},
+  "lang": {"zh-tw": true}
+}

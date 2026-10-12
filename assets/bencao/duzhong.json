@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "duzhong",
+  "category": "xicao",
+  "name": "杜仲",
+  "aliases": ["思仙", "木綿"],
+  "origin": "生上虞山谷及上黨漢中，二月、五月、六月、九月采皮，去粗皮用之。（或云：折之有白絲相連，如人之筋。）",
+  "nature": "甘，溫。歸肝、腎經。",
+  "indications": "補肝腎，強筋骨。主腰膝酸痛、筋骨無力、頭目眩暈。",
+  "source": "本草綱目·木部卷三十五·杜仲",
+  "unlock": {"kind": "ledger_tag", "tag": "plunder"},
+  "lang": {"zh-tw": true}
+}

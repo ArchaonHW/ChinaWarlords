@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "danggui",
+  "category": "shancao",
+  "name": "當歸",
+  "aliases": ["乾歸", "文無"],
+  "origin": "生隴西川谷，二月、八月采根，陰乾。（或云：能使氣血各有所歸，故名當歸。）",
+  "nature": "甘、辛，溫。歸肝、心、脾經。",
+  "indications": "補血活血，調經止痛，潤腸通便。主虛勞寒熱、金瘡瘀血、腸燥便難。",
+  "source": "本草綱目·草部卷十四·當歸",
+  "unlock": {"kind": "chapter_close", "chapter": 4},
+  "lang": {"zh-tw": true}
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "potato.balance/1",
+  "fog": {},
+  "eval": {"stalemate_ticks": 1200},
+  "plan": {"bonus_percent_cap": 50, "replan_cost": 3},
+  "cards": {
+    "comment": "Story 9.1 — declared value tables. Every shipped card draws its numbers from these sets; the registry test enforces it. Sim constants stay sim constants — these are the authored balance surface.",
+    "cooldowns_seconds": [5, 10, 15, 20, 25, 30, 40, 45, 60],
+    "cohesion_gates": [15, 20, 25, 30, 35, 40, 50, 60, 80],
+    "brace_amounts": [5, 10, 15, 20, 30],
+    "attack_boosts": [-10, 5, 10, 15, 20, 25, 30],
+    "cp_gates": [3, 4, 5],
+    "move_targets": [0, 1, 2, 3]
+  }
+}

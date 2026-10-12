@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "wugong",
+  "category": "chongshou",
+  "name": "蜈蚣",
+  "aliases": ["天龍", "百足"],
+  "origin": "生吳谷川谷及江南，頭足赤者良，夏至取之。（或云：以毒攻毒，毒物亦可為藥——用者自慎。）",
+  "nature": "辛，溫。有毒。歸肝經。",
+  "indications": "息風鎮痙，攻毒散結，通絡止痛。主驚風抽搐、瘡瘍腫毒、瘰癧結核、頑固頭痛。",
+  "source": "本草綱目·蟲部卷四十二·蜈蚣",
+  "unlock": {"kind": "corruption", "at_least": 40},
+  "lang": {"zh-tw": true}
+}

@@ -1,0 +1,13 @@
+{
+    "schema": "potato.encounter/1",
+    "id": "longmen_ambush",
+    "node": "longmen",
+    "trigger": "arrival",
+    "map": "field",
+    "defenders": [
+        {"template": "militia", "region": 1,
+         "deck": ["card_hold", "card_brace", "card_flee"]}
+    ],
+    "stakes": {"control": "player"},
+    "seed": 4242
+}

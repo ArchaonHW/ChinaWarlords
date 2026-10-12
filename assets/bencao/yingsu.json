@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "yingsu",
+  "category": "gucai",
+  "name": "罌粟",
+  "aliases": ["米囊子", "御米"],
+  "origin": "其殼如罌子，其米如粟，可以供御。（或云：後世或以花漿害人，癮者傾家——毒非在藥，在人心。）",
+  "nature": "酸、澀，平。殼歸肺、大腸、腎經。",
+  "indications": "澀腸止痢，固脫止咳，止痛。主久瀉久痢、久咳不止、脘腹筋骨疼痛。",
+  "source": "本草綱目·穀部卷二十三·罌粟",
+  "unlock": {"kind": "corruption", "at_least": 80},
+  "lang": {"zh-tw": true}
+}

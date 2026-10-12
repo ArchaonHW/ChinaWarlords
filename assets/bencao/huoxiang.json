@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "huoxiang",
+  "category": "xicao",
+  "name": "藿香",
+  "aliases": ["兜婁婆香"],
+  "origin": "生嶺南，亦出海邊諸國，葉似茄葉而小，夏采之。（或云：瘴癘之鄉，佩之不染。）",
+  "nature": "辛，微溫。歸脾、胃、肺經。",
+  "indications": "芳香化濁，和中止嘔，發表解暑。主暑濕疫癘、嘔吐泄瀉、胸脘痞悶。",
+  "source": "本草綱目·草部卷十四·藿香",
+  "unlock": {"kind": "terrain", "terrain": "forest"},
+  "lang": {"zh-tw": true}
+}

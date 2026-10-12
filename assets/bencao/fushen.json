@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "fushen",
+  "category": "chongshou",
+  "name": "茯神",
+  "aliases": ["茯菟", "伏神"],
+  "origin": "生泰山山谷松下，茯苓抱松根而生者為茯神。（或云：松脂入土，千年而化為茯苓。）",
+  "nature": "甘、淡，平。歸心、脾經。",
+  "indications": "寧心安神，利水。主驚悸怔忡、失眠健忘、小便不利。",
+  "source": "本草綱目·木部卷三十七·茯神",
+  "unlock": {"kind": "myth_state", "state": "invoke_possession"},
+  "lang": {"zh-tw": true}
+}

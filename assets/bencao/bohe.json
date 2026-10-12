@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "bohe",
+  "category": "xicao",
+  "name": "薄荷",
+  "aliases": ["蕃荷菜", "南薄荷"],
+  "origin": "生人家園圃及水澤旁，夏秋采莖葉曝乾。其氣芳烈，辛涼透竅。",
+  "nature": "辛，涼。歸肺、肝經。",
+  "indications": "疏散風熱，清利頭目咽喉，透疹疏肝。主風熱感冒、頭痛目赤、咽喉腫痛。",
+  "source": "本草綱目·草部卷十四·薄荷",
+  "unlock": {"kind": "chapter_close", "chapter": 2},
+  "lang": {"zh-tw": true}
+}

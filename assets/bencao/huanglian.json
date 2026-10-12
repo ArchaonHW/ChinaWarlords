@@ -1,0 +1,13 @@
+{
+  "schema": "potato.bencao/1",
+  "id": "huanglian",
+  "category": "shancao",
+  "name": "黃連",
+  "aliases": ["王連", "支連"],
+  "origin": "生巫陽川谷及蜀郡太山，二月、八月采根。其根連珠而色黃，故名。",
+  "nature": "苦，寒。歸心、脾、胃、膽、大腸經。",
+  "indications": "瀉火燥濕，解毒。主熱氣目痛眥傷、腸澼腹痛下痢、癰腫疳瘡。",
+  "source": "本草綱目·草部卷十三·黃連",
+  "unlock": {"kind": "terrain", "terrain": "forest"},
+  "lang": {"zh-tw": true}
+}

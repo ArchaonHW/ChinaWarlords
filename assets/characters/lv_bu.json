@@ -1,0 +1,10 @@
+{
+    "schema": "potato.character/1",
+    "id": "lv_bu",
+    "name": "呂布",
+    "origin": "九原",
+    "prior": "aggressive",
+    "deck_seed": 42,
+    "deck": ["press_the_advance", "feint_east"],
+    "created": false
+}
