@@ -17,6 +17,7 @@
 #include "Game/Render/BattleView.h"
 #include "Game/Render/MapProjection.h"
 #include "Game/Render/OverworldView.h"
+#include "Game/Render/ReportView.h"
 #include "Game/Render/SpriteAtlas.h"
 #include "Game/Ui/AftermathScreen.h"
 #include "Game/Ui/BattleCommands.h"
@@ -26,6 +27,7 @@
 #include "Game/Ui/OverworldHud.h"
 #include "Game/Ui/PauseOverlay.h"
 #include "Game/Ui/ScreenFlow.h"
+#include "Game/Ui/SettingsForm.h"
 #include "Game/Ui/TitleScreen.h"
 #include "Campaign/Characters/Character.h"
 #include "Campaign/Characters/CommanderBind.h"
@@ -161,6 +163,36 @@ int main() {
         std::fprintf(stderr, "shell init failed\n");
         return 1;
     }
+
+    // ---------- settings (potato.settings/1) ----------
+    // Missing file = first run defaults; a present-but-broken
+    // file also falls back (stderr note) — the alternative is
+    // refusing to launch over a preference file.
+    Game::GameSettings settings;
+    {
+        auto s0 = Game::GameSettings::Load("settings.json");
+        if (s0.ok()) {
+            settings = s0.value;
+        } else {
+            std::fprintf(stderr,
+                         "settings.json unreadable (%s) — "
+                         "defaults\n",
+                         s0.reason.c_str());
+        }
+    }
+    Game::GameSettings draft = settings;
+    bool settingsOpen = false;
+    // baseStyle is captured post-Init so apply can re-scale
+    // from stock every time (ScaleAllSizes multiplies).
+    const ImGuiStyle baseStyle = ImGui::GetStyle();
+    auto applySettings = [&] {
+        ImGui::GetStyle() = baseStyle;
+        ImGui::GetStyle().ScaleAllSizes(
+            Game::DensityScale(settings.density));
+        shell.ResizeWindow(settings.Res().w,
+                           settings.Res().h);
+    };
+    applySettings();
 
     // ---------- campaign state ----------
     Game::ScreenFlow flow;
@@ -307,7 +339,9 @@ int main() {
                     flow.Request(Game::ScreenId::Creation);
                     break;
                 case Game::TitleAction::Settings:
-                    break; // 設定 panel is a later pass
+                    draft = settings;
+                    settingsOpen = true;
+                    break;
                 case Game::TitleAction::Quit:
                     running = false;
                     break;
@@ -545,6 +579,24 @@ int main() {
                                             bm->second, cards);
                                         battle->AttachOpponent(
                                             foe.get(), 10);
+                                        // The encounter's own
+                                        // planning — arrows,
+                                        // Cunning's feints. The
+                                        // objective is the player
+                                        // warband's deploy region
+                                        // (marshal output, host-
+                                        // supplied — the AI never
+                                        // derives it from truth).
+                                        for (const auto& row :
+                                             asmb.rows) {
+                                            if (row.side == 0) {
+                                                foe->PlanDeployed(
+                                                    battle->
+                                                        Controller(),
+                                                    row.region);
+                                                break;
+                                            }
+                                        }
                                         auto pr =
                                             Game::MapProjection::
                                                 Build(
@@ -879,9 +931,16 @@ int main() {
                     report = Campaign::RenderBattleReport(
                         battle->Events(), 0);
                 }
+                // The frame handed to BuildReportPage is the
+                // page's usable bounds (ReportView's sheet
+                // minus margins), so the 結算 commit lands
+                // on the paper, not the desk.
                 const auto page = Game::BuildReportPage(
-                    report, true, 960, 600);
-                ImGui::BeginChild("##report", {0, 520});
+                    report, true, 850, 580);
+                // Aligned to the rendered sheet's text inset —
+                // the ruled lines sit under the glyphs.
+                ImGui::SetCursorPos({170, 54});
+                ImGui::BeginChild("##report", {640, 450});
                 ImGui::TextWrapped("%s", page.text.c_str());
                 ImGui::EndChild();
                 ImGui::SetCursorPos(
@@ -1116,6 +1175,8 @@ int main() {
                     break;
                 }
                 case Game::PauseAction::Settings:
+                    draft = settings;
+                    settingsOpen = true;
                     break;
                 case Game::PauseAction::QuitToTitle:
                     endBattle();
@@ -1129,10 +1190,68 @@ int main() {
             ImGui::End();
         }
 
+        // ---------- settings modal ----------
+        // Floats over everything (title or pause overlay): the
+        // draft is the working copy — 儲存 commits+writes+
+        // applies, 返回 discards.
+        if (settingsOpen) {
+            ImGui::SetNextWindowPos({300, 120});
+            ImGui::SetNextWindowSize({360, 280});
+            ImGui::Begin("設定", &settingsOpen);
+            ImGui::Text("音量（未接音訊）");
+            ImGui::SameLine(170);
+            if (ImGui::Button("-##vol"))
+                Game::StepVolume(draft, -1);
+            ImGui::SameLine();
+            ImGui::Text("%d", draft.volume);
+            ImGui::SameLine();
+            if (ImGui::Button("+##vol"))
+                Game::StepVolume(draft, 1);
+            ImGui::Text("解析度");
+            ImGui::SameLine(170);
+            if (ImGui::Button("-##res"))
+                Game::CycleResolution(draft, -1);
+            ImGui::SameLine();
+            ImGui::Text("%dx%d", draft.Res().w,
+                        draft.Res().h);
+            ImGui::SameLine();
+            if (ImGui::Button("+##res"))
+                Game::CycleResolution(draft, 1);
+            ImGui::Text("介面密度");
+            ImGui::SameLine(170);
+            if (ImGui::Button("-##den"))
+                Game::CycleDensity(draft, -1);
+            ImGui::SameLine();
+            ImGui::Text("%s",
+                        Game::HudDensityLabel(draft.density));
+            ImGui::SameLine();
+            if (ImGui::Button("+##den"))
+                Game::CycleDensity(draft, 1);
+            ImGui::Separator();
+            if (ImGui::Button("儲存")) {
+                settings = draft;
+                settings.Save("settings.json");
+                applySettings();
+                settingsOpen = false;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("返回")) {
+                settingsOpen = false;
+            }
+            ImGui::End();
+        }
+
         // ---------- backdrop ----------
         if (flow.Screen() == Game::ScreenId::Battle && battle &&
-            battle->Beat() != Gameplay::BattleBeat::Aftermath &&
-            battleMap != nullptr) {
+            battle->Beat() == Gameplay::BattleBeat::Aftermath) {
+            // The chronicle's page — deterministic chrome under
+            // the ImGui text layer (design §4 stage one).
+            Game::ReportInput rin;
+            rin.seal = asmb.seed;
+            auto fb = Game::RenderReportPage(rin);
+            if (fb.ok()) shell.Present(fb.value);
+        } else if (flow.Screen() == Game::ScreenId::Battle &&
+                   battle && battleMap != nullptr) {
             // Truth boundary, drawn: own squads paint directly;
             // the enemy is only ever the observer's fog.
             std::vector<Gameplay::Squad> own;
