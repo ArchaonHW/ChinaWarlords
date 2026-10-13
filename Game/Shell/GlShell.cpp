@@ -48,6 +48,55 @@ GLuint CompileShader(GLenum type, const char* src) {
     return sh;
 }
 
+// Story 13.1 — CJK font pipeline. The UI's vocabulary is mostly
+// Chinese (地名/武將名/史官體戰報), so the default Latin-only atlas
+// renders it as boxes. We merge CJK glyphs INTO the default font
+// so mixed strings need no PushFont bookkeeping.
+//
+// Candidate order is thematic: 標楷體 (kaiu) is the period-apt
+// document face, then the system traditional face (msjh), then the
+// broad-coverage fallbacks. Any load failure leaves the Latin atlas
+// intact — degraded, never fatal.
+const char* const kCjkFontPaths[] = {
+    "C:/Windows/Fonts/kaiu.ttf",     // DFKai-SB 標楷體 — 公文書風
+    "C:/Windows/Fonts/msjh.ttc",     // JhengHei 微軟正黑體
+    "C:/Windows/Fonts/mingliu.ttc",  // MingLiU 細明體
+    "C:/Windows/Fonts/msyh.ttc",     // YaHei (broad CJK coverage)
+    "C:/Windows/Fonts/simsun.ttc",   // SimSun
+};
+
+// Compact BMP ranges: unified ideographs cover traditional AND
+// simplified; the punctuation/fullwidth rows carry 。，、「」『』
+// and full-width digits the ledgers/place names use. Extension A
+// is omitted deliberately — 名冊 vocabulary stays in the BMP.
+const ImWchar kCjkRanges[] = {
+    0x0020, 0x00FF,  // Latin-1
+    0x2000, 0x206F,  // general punctuation (— ・…)
+    0x3000, 0x30FF,  // CJK punctuation + kana
+    0x4E00, 0x9FFF,  // CJK unified ideographs
+    0xFF00, 0xFFEF,  // fullwidth forms
+    0,
+};
+
+void LoadCjkFont() {
+    ImGuiIO& io = ImGui::GetIO();
+    // 16 px: CJK strokes turn to mush at ImGui's default 13.
+    ImFontConfig base;
+    base.SizePixels = 16.0f;
+    io.Fonts->AddFontDefault(&base);
+    for (const char* path : kCjkFontPaths) {
+        ImFontConfig cfg;
+        cfg.MergeMode = true;
+        if (io.Fonts->AddFontFromFileTTF(path, 16.0f, &cfg,
+                                         kCjkRanges) != nullptr) {
+            std::fprintf(stderr, "ui: CJK font <- %s\n", path);
+            return;
+        }
+    }
+    std::fprintf(stderr,
+                 "ui: no CJK font found — Chinese renders as boxes\n");
+}
+
 } // namespace
 
 bool GlShell::Init(int w, int h, const char* title) {
@@ -107,6 +156,8 @@ bool GlShell::Init(int w, int h, const char* title) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
+    // Fonts must land before the backends build the atlas texture.
+    LoadCjkFont();
     imgui_ = ImGui_ImplGlfw_InitForOpenGL(win, true) &&
              ImGui_ImplOpenGL3_Init("#version 330");
     if (!imgui_) {
