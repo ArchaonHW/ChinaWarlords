@@ -91,9 +91,23 @@ cmake -B build -S . -DPOTATO_BUILD_GUI=OFF
 cmake --build build --config Release
 ```
 
-> 注意：`PotatoEngine` 靜態庫目前僅 MSVC 可編（`Security/` 使用 MSVC 專用
-> 寫法）；`PotatoGameplay` 刻意不連結引擎靜態庫，headless 遊戲層可在
+> 注意：`PotatoEngine` 靜態庫可用 MSVC 與 Linux g++ 建置，但 MinGW 不行
+>（`Security/` 使用 MSVC 專用寫法）；`PotatoGameplay` 刻意不連結引擎靜態庫，headless 遊戲層可在
 > MinGW 下建置。MinGW 專用連結以 `if(WIN32 AND NOT MSVC)` 守衛。
+
+### Linux（Ubuntu 24.04 驗證）
+
+```bash
+sudo apt-get install -y cmake g++ libglfw3-dev libgl1-mesa-dev \
+  libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxkbcommon-dev
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j"$(nproc)"
+```
+
+中文字型自動偵測（`Platform/SystemFonts.h`）：Windows 標楷體／微軟正黑體 →
+Linux Noto CJK（`fonts-noto-cjk`）、文鼎、文泉驛 → macOS PingFang；
+可用 `POTATO_CJK_FONT`（及 `POTATO_CJK_FONT_BOLD`）指定字型檔。
+IDE 工作區：`--workspace <dir>` → `MINGGORTS_WORKSPACE` → 自執行檔／目前目錄向上尋找 repo 根目錄。
 
 ### 測試
 
@@ -102,8 +116,10 @@ cd build
 ctest -C Release --output-on-failure
 ```
 
-- 31 個 CTest 測試全綠：`potato_test_*` 單元測試、record/verify CLI
-  e2e、`gameplay_dep_guard` 依賴方向守衛（Windows）
+- CTest 共 41 個測試（Linux，2026-10-14 驗證全綠；Windows 另加
+  `gameplay_dep_guard` 依賴方向守衛共 42 個）：`potato_test_*` 單元測試、
+  record/verify CLI e2e、引擎測試（RenderingServer、LLMToolBridge、Zeta 等）
+- CI（`pre-commit-checks.yml`，ubuntu-24.04）每次 push／PR 皆建置並跑 ctest
 - `-DPOTATO_TESTS=OFF` 可略過全部測試 target 加速純庫建置
 - 玩法測試一律 headless——不得依賴 GL context
 
