@@ -119,6 +119,11 @@ public:
     void SetAIAgentManager(AIAgentManager* manager);
     void SetLLMClient(ILLMClient* client);
     void SetToolRegistry(ToolRegistry* registry);
+
+    // 每個節點執行完（含條件/迴圈/並行的子例程節點）觸發——
+    // async 執行進度推播用；失敗節點 output 帶 "ERROR:" 前綴
+    std::function<void(const std::string& nodeId,
+                       const std::string& output)> onNodeComplete;
     
     // Validation
     bool Validate();

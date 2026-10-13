@@ -5,7 +5,9 @@
 
 #include "AI/ZetaAgentTools.h"
 
+#include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <string>
 #include <unordered_map>
 
@@ -120,9 +122,114 @@ int main() {
                    {{"n_max", "1000000"}}),
               "bound_ok=1"), "zeta_robin 比值<1");
 
+    // L(1,χ₋₇)=π/√7≈1.18741
+    Check(Has(Call(reg, "zeta_chi7_eval",
+                   {{"sigma", "1"}}),
+              "1.187"), "zeta_chi7_eval L(1,χ₋₇)=π/√7");
+
+    // Laguerre–Turán：t=30 處 L/ξ² 應 ≤0
+    Check(Has(Call(reg, "zeta_laguerre", {{"t", "30"}}),
+              "holds=1"), "zeta_laguerre t=30 成立");
+
     // ψ(100)=ΣΛ(n)≈94.0453
     Check(Has(Call(reg, "zeta_psi", {{"x", "100"}}),
               "94.04"), "zeta_psi ψ(100)≈94.045");
+
+    // 統計/泛函形式工具
+    {
+        // γ₁=14.1347…：Z 在零點應≈0（解析輸出值驗證）
+        ToolResult r = Call(reg, "zeta_z_eval",
+                            {{"t", "14.13473"}});
+        bool near0 = false;
+        if (r.success) {
+            const auto eq = r.output.find('=');
+            if (eq != std::string::npos)
+                near0 = std::fabs(
+                            std::atof(
+                                r.output.c_str() + eq +
+                                1)) < 0.01;
+        }
+        Check(near0, "zeta_z_eval Z(γ₁)≈0");
+    }
+    Check(!Call(reg, "zeta_z_eval", {{"t", "0.5"}})
+               .success,
+          "zeta_z_eval 拒絕 t<1（θ 漸近失效區）");
+    Check(Has(Call(reg, "zeta_gue_spacing",
+                   {{"t_max", "150"}}),
+              "gaps="),
+          "zeta_gue_spacing 間距分佈");
+    {
+        ToolResult r = Call(reg, "zeta_explicit_formula",
+                            {{"t_max", "130"}});
+        Check(Has(r, "max_err="),
+              "zeta_explicit_formula 重建誤差輸出");
+    }
+    Check(Has(Call(reg, "zeta_dedekind_fe"), "holds=1"),
+          "zeta_dedekind_fe Λ_K(s)=Λ_K(1−s)");
+    Check(Has(Call(reg, "zeta_speiser",
+                   {{"t_max", "30"}}),
+              "speiser_ok=1"),
+          "zeta_speiser ζ′ 左半帶無零點");
+    {
+        ToolResult r = Call(reg, "zeta_moments",
+                            {{"t_hi", "100"},
+                             {"step", "0.2"}});
+        Check(Has(r, "M2_ratio=") && Has(r, "M4_ratio="),
+              "zeta_moments 比值輸出");
+    }
+    {
+        ToolResult r = Call(reg, "zeta_selberg",
+                            {{"t_hi", "120"},
+                             {"step", "0.2"}});
+        Check(Has(r, "kurtosis="),
+              "zeta_selberg CLT 統計輸出");
+    }
+    Check(Has(Call(reg, "zeta_gram", {{"t_max", "130"}}),
+              "gram_ok=1"),
+          "zeta_gram 區塊定律");
+    Check(Has(Call(reg, "zeta_euler_product",
+                   {{"sigma", "2"}, {"p_max", "2000"}}),
+              "rel_err="),
+          "zeta_euler_product 自洽");
+    {
+        ToolResult r = Call(reg, "zeta_pair_correlation",
+                            {{"t_max", "150"}});
+        Check(Has(r, "gue_repulsion=1"),
+              "zeta_pair_correlation GUE 排斥");
+    }
+    Check(Has(Call(reg, "zeta_st", {{"t_max", "150"}}),
+              "bounded=1"), "zeta_st 有界");
+    Check(Has(Call(reg, "zeta_min_spacing",
+                   {{"t_max", "150"}}),
+              "min_spacing=0."),
+          "zeta_min_spacing 非退化間距");
+    Check(Has(Call(reg, "zeta_chebyshev_bias",
+                   {{"x_max", "100000"}}),
+              "bias_4_3_leads=1"),
+          "zeta_chebyshev_bias π_{4,3} 領先");
+    Check(Has(Call(reg, "zeta_baez_duarte",
+                   {{"n_basis", "8"},
+                    {"n_points", "20000"}}),
+              "monotone=1"),
+          "zeta_baez_duarte d_N 單調遞減");
+
+    // 複合審計：t_max=40, x_max=1e5——逐項 pass + 結尾
+    // finite_verification=1 proof=0
+    {
+        ToolResult r = Call(reg, "zeta_audit",
+                            {{"t_max", "40"},
+                             {"x_max", "100000"}});
+        Check(Has(r, "zeros.count=6"),
+              "zeta_audit 掃描 6 零點（t≤40）");
+        Check(Has(r, "pass=0") == false &&
+                  Has(r, "audit.passed="),
+              "zeta_audit 逐項全過");
+        Check(Has(r, "finite_verification=1 proof=0"),
+              "zeta_audit 標示有限驗證非證明");
+    }
+    Check(!Call(reg, "zeta_audit", {{"t_max", "500"}})
+               .success,
+          "zeta_audit 拒絕 t_max>150");
 
     // 未註冊工具錯誤路徑
     Check(!Call(reg, "zeta_nonexistent").success,
