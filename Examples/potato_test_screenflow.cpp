@@ -2,15 +2,11 @@
 // Table-gated narrative moves, the always-legal abandon door, the
 // pause overlay flag, and the save gating that keeps I/O off the
 // tick path.
-<<<<<<< HEAD
-#include "Game/Ui/ScreenFlow.h"
-=======
 #include "Game/Ui/EndingScreen.h"
 #include "Game/Ui/ScreenFlow.h"
 #include "Game/Ui/PauseOverlay.h"
 #include "Game/Ui/TitleScreen.h"
 #include "Campaign/Ledger/Ledger.h"
->>>>>>> 21139f9 (feat(game): wire Story 13 screen flow + Epic 7 subversion end-to-end)
 
 #include <cstdio>
 
@@ -184,8 +180,6 @@ int main() {
         Check(!f.CanSave(), "ending can't save");
     }
 
-<<<<<<< HEAD
-=======
     // ===== 13.8: pause overlay widget model =====
     {
         // Save gating flows straight from ScreenFlow::CanSave —
@@ -294,7 +288,6 @@ int main() {
         // widget that issues it.
     }
 
->>>>>>> 21139f9 (feat(game): wire Story 13 screen flow + Epic 7 subversion end-to-end)
     std::printf("%s\n", failures == 0 ? "ALL PASS" : "FAILURES");
     return failures == 0 ? 0 : 1;
 }
