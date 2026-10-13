@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Campaign/Chain/MintOutbox.h"
+#include "Campaign/Governance/Victory.h" // ChapterResolution
 #include "Campaign/Ledger/CrossCheck.h"
 #include "Gameplay/Json/JsonValue.h"
 #include "Gameplay/Result.h"
@@ -33,6 +34,21 @@ inline constexpr std::string_view ACH_ZERO_COMBAT = "zero_combat";
 inline constexpr std::string_view ACH_FORGERY_BUST = "forgery_bust";
 inline constexpr std::string_view ACH_FOUR_VOICE =
     "four_voice_ending";
+
+// The canonical resolution→achievement derivation (Epic 7): which
+// keys a chapter's sealed verdict earns BEFORE caller-specific keys
+// are considered. A Subversion verdict — whole-defection battle or
+// a negotiated zero-combat chapter — mints zero_combat; nothing
+// else does. EmitGatedClaims still takes the merged set from the
+// caller; this helper exists so no caller has to know the rule.
+inline std::span<const std::string_view> ResolutionAchievements(
+    ChapterResolution r) {
+    static constexpr std::string_view kZero[] = {ACH_ZERO_COMBAT};
+    if (r == ChapterResolution::Subversion) {
+        return {kZero, 1};
+    }
+    return {};
+}
 
 // Cross-checks `recordDoc` (the raw potato.battle_record doc)
 // against `ledger`, and only on verdict Clean emits the chapter-

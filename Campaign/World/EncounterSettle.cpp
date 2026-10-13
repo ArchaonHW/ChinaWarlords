@@ -40,6 +40,10 @@ Posting SealEncounterPosting(ChapterResolution r,
         p.credit = {Account::Materiel, kSealAmount};
         p.debit = {Account::ArmyPrestige, kSealAmount};
         break;
+    case ChapterResolution::Subversion:
+        p.credit = {Account::Mandate, kSealAmount};
+        p.debit = {Account::ArmyPrestige, kSealAmount};
+        break;
     }
     p.memo = "encounter " + enc.id +
              " resolved: " + ResolutionName(r);
@@ -58,7 +62,7 @@ Gameplay::Result<EncounterSettlement> SettleEncounter(
     const EncounterDef& enc, bool battleWon, int playerSide,
     std::span<const Gameplay::SimEvent> deeds,
     const std::vector<AftermathRow>& casualties,
-    std::uint64_t recordRoot, MythLog* mythLog) {
+    std::uint64_t recordRoot, MythLog* mythLog, bool subverted) {
     // Preflight before ANY mutation — same discipline as
     // ResolveAftermath: every mutating stage below is unfailable
     // once these pass.
@@ -155,7 +159,8 @@ Gameplay::Result<EncounterSettlement> SettleEncounter(
     const ChapterResolution r =
         IsGovernanceVictory(a)
             ? ChapterResolution::GovernanceVictory
-            : (battleWon ? ChapterResolution::BattleVictory
+            : (battleWon ? (subverted ? ChapterResolution::Subversion
+                                      : ChapterResolution::BattleVictory)
                          : ChapterResolution::Defeat);
     const auto sealed = state.GetLedger().Post(
         SealEncounterPosting(r, enc, recordRoot));

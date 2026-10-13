@@ -44,7 +44,10 @@ public:
     // Older tools reject kind > 10 / aux > 6.
     // v6: Story 5.5 — MythInvasion (12) for the level-3 deity
     // counterattack cadence. Older tools reject kind > 11.
-    static constexpr int TOOL_VERSION = 6;
+    // v7: Epic 7 — SquadDefected (13) + InterventionKind aux 10
+    // (Subvert) + CloseReason ordinal 3 (Subversion) on
+    // ResultDeclared. Older tools reject kind > 12 / aux > 9.
+    static constexpr int TOOL_VERSION = 7;
     static constexpr std::string_view SCHEMA = "potato.battle_record/1";
 
     // Embedded content makes the record self-contained — the verifier

@@ -23,6 +23,11 @@ enum class ChapterResolution : std::uint8_t {
     GovernanceVictory, // thresholds met — the ledger won the chapter
     Defeat,            // field lost AND thresholds unmet; Story 4.5
                        // owns what conversion does with it
+    Subversion,        // Epic 7 — field won by turning the enemy
+                       // wholesale (倒戈) or a negotiated/deterrence
+                       // outcome on a zero-combat chapter; seals
+                       // "resolution:subversion" (the MintClaim
+                       // spelling already reserved for it)
 };
 
 // Canonical spellings — the `resolution:` tag payload and the
@@ -45,6 +50,14 @@ bool IsGovernanceVictory(const GovernanceAccumulators& a);
 // zero-combat chapter (ChapterDef.combat==false) reports its own
 // outcome (negotiation/deterrence) through the same flag.
 //
+// `subverted` marks a field success earned WITHOUT conquest: a
+// battle whose CloseReason was Subversion (the entire enemy force
+// turned), or a zero-combat chapter whose negotiation/deterrence
+// eval succeeded. It only matters when battleWon is also true —
+// you cannot negotiate a loss — and it still loses to the
+// governance thresholds: the people's verdict outranks even a
+// bloodless one.
+//
 // The governance seal debits 民心 by the token grain — the seal
 // consumes the resource it measures, so k prior governance
 // victories raise the practical threshold to 70+k across the
@@ -61,6 +74,6 @@ bool IsGovernanceVictory(const GovernanceAccumulators& a);
 // (CrossCheck, Story 2.5) — the verdict cites its evidence.
 Gameplay::Result<ChapterResolution> ConcludeChapter(
     CampaignState& state, const ChapterLibrary& lib, bool battleWon,
-    std::uint64_t recordRoot = 0);
+    std::uint64_t recordRoot = 0, bool subverted = false);
 
 } // namespace Potato::Campaign

@@ -459,11 +459,12 @@ Result<bool> BattleController::IssueReplan(int side, int squadIndex,
 namespace {
 
 // A coherent squad of `side` STANDING in `region` — the proximity
-// precondition for refusing a surrender there. Holding only: a
-// squad mid-leg has already left (or hasn't arrived); routing ones
-// are fleeing, not refusing.
-bool RefuserPresent(const std::vector<Squad>& squads, int side,
-                    std::size_t region) {
+// precondition for refusing a surrender there, and the reach
+// precondition for turning one (Epic 7): an envoy must stand on the
+// ground it persuades. Holding only: a squad mid-leg has already
+// left (or hasn't arrived); routing ones are fleeing, not envoys.
+bool EnvoyPresent(const std::vector<Squad>& squads, int side,
+                  std::size_t region) {
     for (const Squad& s : squads) {
         if (s.side == side && s.state == SquadState::Holding &&
             s.regionIndex == region) {
@@ -495,7 +496,7 @@ Result<bool> BattleController::IssueExecute(int side, int squadIndex) {
     if (vic.state != SquadState::Routing) {
         return Fail<bool>("command", "victim is not routing");
     }
-    if (!RefuserPresent(squads_, side, vic.regionIndex)) {
+    if (!EnvoyPresent(squads_, side, vic.regionIndex)) {
         return Fail<bool>("command", "no squad in reach to refuse");
     }
     for (const Intervention& c : pendingCommands_) {
@@ -633,6 +634,55 @@ Result<bool> BattleController::IssueGhostArmy(int side,
     return Ok(true);
 }
 
+Result<bool> BattleController::IssueSubvert(int side, int squadIndex) {
+    // CheckCommand can't carry this shape either (same reason as
+    // Execute): the target is the OTHER side's squad and Routing is
+    // acceptable — a plea-in-flight is exactly who turns.
+    if (beat_ != BattleBeat::Execution) {
+        return Fail<bool>("command", "interventions only during Execution");
+    }
+    if (side != 0 && side != 1) {
+        return Fail<bool>("command", "side must be 0 or 1");
+    }
+    if (squadIndex < 0 ||
+        static_cast<std::size_t>(squadIndex) >= squads_.size()) {
+        return Fail<bool>("command", "invalid squad index");
+    }
+    const Squad& vic = squads_[static_cast<std::size_t>(squadIndex)];
+    if (vic.side == side) {
+        return Fail<bool>("command", "cannot subvert your own squad");
+    }
+    if (!vic.IsEffective()) {
+        return Fail<bool>("command", "target is off-field");
+    }
+    // Only cracks take the wedge — a coherent enemy squad shrugs the
+    // envoy off. Routing counts: a plea-in-flight is turnable (and
+    // beats Execute to it — queue order decides).
+    if (vic.state != SquadState::Routing &&
+        vic.cohesion >= SUBVERT_COHESION) {
+        return Fail<bool>("command", "target is not wavering");
+    }
+    if (!EnvoyPresent(squads_, side, vic.regionIndex)) {
+        return Fail<bool>("command", "no squad in reach to turn it");
+    }
+    for (const Intervention& c : pendingCommands_) {
+        if (c.kind == InterventionKind::Subvert &&
+            c.squadIndex == squadIndex) {
+            return Fail<bool>("command", "target already marked");
+        }
+    }
+    const int tick = static_cast<int>(sim_.TickCount());
+    pendingCommands_.push_back({side, InterventionKind::Subvert,
+                                squadIndex,
+                                static_cast<int>(vic.regionIndex), tick,
+                                {}});
+    events_.push_back({SimEvent::Kind::Intervention, tick, squadIndex, -1,
+                       static_cast<int>(vic.regionIndex),
+                       static_cast<int>(InterventionKind::Subvert),
+                       side, {}, {}});
+    return Ok(true);
+}
+
 void BattleController::MarchArrows() {
     for (std::size_t i = 0; i < squads_.size(); ++i) {
         PlanArrow& a = arrows_[i];
@@ -685,7 +735,7 @@ void BattleController::ApplyInterventions(int tick) {
                     squads_[static_cast<std::size_t>(cmd.squadIndex)];
                 if (vic.state == SquadState::Routing &&
                     vic.side != side &&
-                    RefuserPresent(squads_, side, vic.regionIndex)) {
+                    EnvoyPresent(squads_, side, vic.regionIndex)) {
                     // The kill shot zeroes hp — a Destroyed corpse
                     // must not keep routing victims' full hp
                     // (ApplyHit is the only other path and zeroes).
@@ -693,6 +743,51 @@ void BattleController::ApplyInterventions(int tick) {
                     if (!vic.ApplyEvent(SquadEvent::HpZero)) continue;
                     events_.push_back(
                         {SimEvent::Kind::SquadExecuted, tick,
+                         cmd.squadIndex, -1,
+                         static_cast<int>(vic.regionIndex), 0, side,
+                         {}, {}});
+                }
+            }
+            continue;
+        }
+        if (cmd.kind == InterventionKind::Subvert) {
+            // The target IS the wavering enemy — handle before the
+            // squad guard (which would skip Routing). Re-gated at
+            // apply like Execute: queue order decides contested
+            // marks (Subvert-first turns the squad Execute was
+            // aimed at — mercy by presence).
+            if (cmd.squadIndex >= 0 &&
+                static_cast<std::size_t>(cmd.squadIndex) <
+                    squads_.size()) {
+                Squad& vic =
+                    squads_[static_cast<std::size_t>(cmd.squadIndex)];
+                if (vic.IsEffective() && vic.side != side &&
+                    (vic.state == SquadState::Routing ||
+                     vic.cohesion < SUBVERT_COHESION) &&
+                    EnvoyPresent(squads_, side, vic.regionIndex)) {
+                    // The banner flips, the squad stands down where
+                    // it stands — a mid-leg move never completes.
+                    vic.side = side;
+                    vic.ApplyEvent(SquadEvent::Defected);
+                    // Fog remap follows the flip: the persuader's
+                    // fog drops the cloud (now its own truth); the
+                    // betrayed side gains a cloud AT the witnessed
+                    // spot — they watched it walk over, so the
+                    // belief lands collapsed (certainty 100).
+                    int& mine =
+                        cloudOf_[side][static_cast<std::size_t>(
+                            cmd.squadIndex)];
+                    if (mine >= 0) {
+                        fog_[side].RemoveCloud(mine);
+                        mine = -1;
+                    }
+                    int& theirs =
+                        cloudOf_[1 - side][static_cast<std::size_t>(
+                            cmd.squadIndex)];
+                    theirs = fog_[1 - side].AddCloud(
+                        static_cast<int>(vic.regionIndex), 100);
+                    events_.push_back(
+                        {SimEvent::Kind::SquadDefected, tick,
                          cmd.squadIndex, -1,
                          static_cast<int>(vic.regionIndex), 0, side,
                          {}, {}});
@@ -844,8 +939,9 @@ void BattleController::ApplyInterventions(int tick) {
             case InterventionKind::MythPacify:
             case InterventionKind::MythPossession:
             case InterventionKind::MythGhostArmy:
-                break; // handled above — fog/myth ops + Execute skip
-                       // the squad guard
+            case InterventionKind::Subvert:
+                break; // handled above — fog/myth ops + Execute/Subvert
+                       // skip the squad guard
         }
     }
     pendingCommands_.clear();
@@ -921,7 +1017,34 @@ bool BattleController::Tick() {
     //    timer is the same mechanism with a different verdict.
     if (CountEffective(0) == 0 || CountEffective(1) == 0) {
         beat_ = BattleBeat::Aftermath;
-        CloseBattle(CloseReason::Wipe, tick);
+        CloseReason reason = CloseReason::Wipe;
+        // Epic 7 — 不戰而屈人之兵: the wipe qualifies as Subversion
+        // when the loser's ENTIRE force turned — no squad still
+        // carries its banner (defectors flipped sides; corpses and
+        // routed stragglers keep theirs) and at least one SquadDefected
+        // deed records the turning. An ambiguous double-wipe stays
+        // Wipe.
+        const int eff0 = CountEffective(0), eff1 = CountEffective(1);
+        if (eff0 != eff1) {
+            const int winner = eff0 == 0 ? 1 : 0;
+            const int loser = 1 - winner;
+            bool bannerStands = false;
+            for (const Squad& s : squads_) {
+                if (s.side == loser) { bannerStands = true; break; }
+            }
+            bool turned = false;
+            for (const SimEvent& e : events_) {
+                if (e.kind == SimEvent::Kind::SquadDefected &&
+                    e.side == winner) {
+                    turned = true;
+                    break;
+                }
+            }
+            if (!bannerStands && turned) {
+                reason = CloseReason::Subversion;
+            }
+        }
+        CloseBattle(reason, tick);
     } else if (evalConfig_.stalemateTicks > 0 &&
                sim_.TickCount() >= static_cast<std::uint64_t>(
                                        evalConfig_.stalemateTicks)) {
@@ -1011,6 +1134,7 @@ void BattleController::CloseBattle(CloseReason reason, int stampTick) {
     result_.closeReason = reason;
     result_.forced = (reason == CloseReason::Concede);
     result_.stalemate = (reason == CloseReason::Stalemate);
+    result_.subverted = (reason == CloseReason::Subversion);
     result_.elapsedTicks = sim_.TickCount();
     for (int side = 0; side < 2; ++side) {
         for (const Squad& s : squads_) {

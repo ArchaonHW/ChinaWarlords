@@ -42,14 +42,14 @@ bool EventFromJson(const JsonValue& j, SimEvent& e) {
         return false;
     }
     const std::int64_t kind = j["kind"].AsInt();
-    // CardFired..MythInvasion — ordinals are append-only, so the
+    // CardFired..SquadDefected — ordinals are append-only, so the
     // last enumerator IS the bound (v3 added governance 4-7 and
     // SquadExecuted 8; v4 adds InfiltrationChanged 9 and
     // ShrineCaptured 10; v5 adds MythActionInvoked 11; v6 adds
-    // MythInvasion 12).
+    // MythInvasion 12; v7 adds SquadDefected 13).
     if (kind < 0 ||
         kind > static_cast<std::int64_t>(
-                   SimEvent::Kind::MythInvasion)) {
+                   SimEvent::Kind::SquadDefected)) {
         return false;
     }
     // Every field must fit int32 — silent narrowing would let a forged
@@ -71,16 +71,17 @@ bool EventFromJson(const JsonValue& j, SimEvent& e) {
     if (!fitInt("slot", -1, I32MAX, parsed.slotIndex)) return false;
     if (!fitInt("param", -2147483648, I32MAX, parsed.param)) return false;
     // aux multiplexes by kind: BattleBeat ordinal (BeatChanged,
-    // 0..2), InterventionKind ordinal (Intervention, 0..9 — the
-    // myth kinds ride 7-9), MythActionKind ordinal
-    // (MythActionInvoked, 0..2), CloseReason ordinal
-    // (ResultDeclared, 0..2), convoy index (governance kinds,
-    // 0..3), InfiltrationLevel (InfiltrationChanged, 0..3),
-    // invasion form (MythInvasion, 0..2).
-    // Replan's path length rides param, not aux. 9 is the max
+    // 0..2), InterventionKind ordinal (Intervention, 0..10 — the
+    // myth kinds ride 7-9, Subvert rides 10), MythActionKind
+    // ordinal (MythActionInvoked, 0..2), CloseReason ordinal
+    // (ResultDeclared, 0..3 — Subversion is 3), convoy index
+    // (governance kinds, 0..3), InfiltrationLevel
+    // (InfiltrationChanged, 0..3), invasion form (MythInvasion,
+    // 0..2).
+    // Replan's path length rides param, not aux. 10 is the max
     // legitimate value; the replay diff catches any
     // kind-inconsistent value anyway.
-    if (!fitInt("aux", 0, 9, parsed.aux)) return false;
+    if (!fitInt("aux", 0, 10, parsed.aux)) return false;
     if (!fitInt("side", -1, 1, parsed.side)) return false;
     for (const JsonValue& r : j["path"].Items()) {
         if (!r.IsInt() || r.AsInt() < 0 || r.AsInt() > I32MAX) return false;

@@ -26,6 +26,7 @@ const char* HudVerbName(InterventionKind k) {
             return "myth_possession";
         case InterventionKind::MythGhostArmy:
             return "myth_ghost_army";
+        case InterventionKind::Subvert:      return "subvert";
     }
     return "unknown";
 }
@@ -52,6 +53,7 @@ constexpr InterventionKind VERBS[] = {
     InterventionKind::Execute,   InterventionKind::MythPacify,
     InterventionKind::MythPossession,
     InterventionKind::MythGhostArmy,
+    InterventionKind::Subvert,
 };
 
 bool IsMythVerb(InterventionKind k) {

@@ -72,6 +72,18 @@ bool DeedPosting(const SimEvent& e, Posting& p, int playerSide) {
                       "invasion"}};
             }
             return true;
+        case SimEvent::Kind::SquadDefected:
+            // Epic 7 — 來降者厚賞: the bounty is the price (Execute's
+            // mirror — cruelty is free; mercy books 物資 against the
+            // 不殺之名 prestige it earns). "turned:" names the
+            // defector — same convention SquadExecuted's "victim:"
+            // set: the index is the turned squad, not a perpetrator.
+            p = {{Account::ArmyPrestige, 10}, {Account::Materiel, 15},
+                 "rival turns",
+                 {FieldTag(e.param),
+                  "turned:" + std::to_string(e.squadIndex),
+                  "order:+3"}};
+            return true;
         case SimEvent::Kind::SquadExecuted:
             // "victim:" names the murdered squad — every other kind's
             // squadIndex is the perpetrator; conflating them would

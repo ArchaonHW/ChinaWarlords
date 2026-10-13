@@ -24,6 +24,10 @@ enum class CloseReason : std::uint8_t {
     Wipe = 0,      // a side ran out of effective squads
     Concede = 1,   // host requested Aftermath mid-Execution
     Stalemate = 2, // timer fired with both sides still standing
+    // Epic 7 — 不戰而屈人之兵: the losing side's ENTIRE force turned
+    // (every deserter wears the winner's banner — no routed corpse,
+    // no casualty). Subsumes Wipe: the side is empty either way.
+    Subversion = 3,
 };
 
 // A typed posting derived from the outcome — Epic 2's double-entry
@@ -50,6 +54,7 @@ struct BattleResult {
     int winnerSide = -1;
     bool forced = false;            // == (closeReason == Concede)
     bool stalemate = false;         // == (closeReason == Stalemate)
+    bool subverted = false;         // == (closeReason == Subversion)
     std::uint64_t elapsedTicks = 0; // ticks actually executed
     int effective[2] = {0, 0};      // includes Routing (still on-field)
     int routed[2] = {0, 0};         // survived — RefitCamp candidates

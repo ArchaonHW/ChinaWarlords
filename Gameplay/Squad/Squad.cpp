@@ -72,7 +72,10 @@ bool Squad::ApplyEvent(SquadEvent ev) {
     state = TargetOf(ev);
     // Leaving the field (rout or destruction) cancels any in-flight
     // move — every path into these states clears edge state here.
-    if (state == SquadState::Routing || state == SquadState::Destroyed) {
+    // A defection does the same: the turncoat stands down where it
+    // is — a Moving squad caught mid-leg never finishes the edge.
+    if (state == SquadState::Routing || state == SquadState::Destroyed ||
+        ev == SquadEvent::Defected) {
         edgeTarget = NO_REGION;
         edgeProgress = 0;
     }

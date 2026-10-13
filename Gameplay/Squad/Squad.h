@@ -46,6 +46,9 @@ enum class SquadEvent : std::uint8_t {
     CohesionBreak,   // cohesion fell below ROUT_THRESHOLD
     HpZero,
     RetreatComplete, // controller-driven; future stories issue it
+    Defected,        // Epic 7: the banner flipped — stands down to
+                     // Holding for its new side (never un-routs a
+                     // squad that already left the field)
 };
 
 constexpr int ROUT_THRESHOLD = 20;      // cohesion < 20% -> rout (GDD)
@@ -80,6 +83,9 @@ constexpr bool CanTransition(SquadState from, SquadEvent ev) {
         case SquadEvent::CohesionBreak:   return from == SquadState::Holding ||
                                                     from == SquadState::Moving;
         case SquadEvent::RetreatComplete: return from == SquadState::Routing;
+        case SquadEvent::Defected:        return from == SquadState::Holding ||
+                                                    from == SquadState::Moving ||
+                                                    from == SquadState::Routing;
         case SquadEvent::HpZero:
             return from == SquadState::Holding || from == SquadState::Moving ||
                    from == SquadState::Routing;
@@ -94,6 +100,7 @@ constexpr SquadState TargetOf(SquadEvent ev) {
         case SquadEvent::CohesionBreak:   return SquadState::Routing;
         case SquadEvent::HpZero:          return SquadState::Destroyed;
         case SquadEvent::RetreatComplete: return SquadState::Routed;
+        case SquadEvent::Defected:        return SquadState::Holding;
     }
     return SquadState::Holding;
 }

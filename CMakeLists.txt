@@ -684,6 +684,13 @@ add_executable(potato_test_overworld Examples/potato_test_overworld.cpp)
 target_include_directories(potato_test_overworld PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(potato_test_overworld PotatoGame)
 add_test(NAME potato_test_overworld COMMAND potato_test_overworld)
+
+# Epic 7 — 不戰 (subversion): defection verb + Subversion verdict +
+# negotiated seals + deterrence eval
+add_executable(potato_test_subversion Examples/potato_test_subversion.cpp)
+target_include_directories(potato_test_subversion PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(potato_test_subversion PotatoCampaign)
+add_test(NAME potato_test_subversion COMMAND potato_test_subversion)
 endif() # POTATO_TESTS
 
 if(POTATO_BUILD_GUI)
