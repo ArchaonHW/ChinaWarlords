@@ -5,22 +5,24 @@
 
 #include "IDECore.h"
 #include "AIIntegration.h"
+#include "WorkspacePath.h"
 #include <iostream>
 #include <vector>
 #include <string>
 
 using namespace MingGoRTSIDE;
 
-int main() {
+int main(int argc, char** argv) {
     std::cout << "=== MingGoRTS IDE - AI-Powered Game Development Environment ===" << std::endl;
     std::cout << "Powered by Potato Engine AI Agent System" << std::endl;
     std::cout << std::endl;
     
     // Configure IDE
     IDEConfig config;
-    config.workspacePath = "C:\\HWC\\MingGoRTS";
+    // --workspace <dir> / MINGGORTS_WORKSPACE / exe-relative repo root
+    config.workspacePath = ResolveWorkspacePath(argc, argv);
     config.projectName = "MingGoRTS Game Project";
-    config.enginePath = "C:\\HWC\\MingGoRTS";
+    config.enginePath = config.workspacePath;
     config.enableAIAssistance = true;
     config.enableAutocompletion = true;
     config.enableMultiAgent = true;
