@@ -274,9 +274,15 @@ target_include_directories(NaturalLanguageProcessing PUBLIC ${CMAKE_SOURCE_DIR}/
 add_library(AIAgentSystem STATIC AI/AIAgentSystem.cpp)
 target_include_directories(AIAgentSystem PUBLIC ${CMAKE_SOURCE_DIR}/AI)
 
-# AI 增強模塊 - LLM 集成
-add_library(LLMIntegration STATIC AI/LLMIntegration.cpp)
+# AI 增強模塊 - LLM 集成（HttpClient.cpp 提供 WinHTTP 傳輸層；
+# MSVC 由 #pragma comment 連 winhttp，MinGW 需顯式連結）
+add_library(LLMIntegration STATIC
+    AI/LLMIntegration.cpp
+    Networking/HttpClient.cpp)
 target_include_directories(LLMIntegration PUBLIC ${CMAKE_SOURCE_DIR}/AI)
+if(WIN32 AND NOT MSVC)
+    target_link_libraries(LLMIntegration winhttp)
+endif()
 
 # AI 增強模塊 - RAG 系統
 add_library(RAGSystem STATIC AI/RAGSystem.cpp)
@@ -334,6 +340,12 @@ add_library(ZetaAgentTools STATIC AI/ZetaAgentTools.cpp)
 target_include_directories(ZetaAgentTools PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(ZetaAgentTools ToolFramework)
 
+# AI 增強模塊 - LLM function-calling 橋（ToolDefinition schema、
+# ToolCall.arguments JSON 解析、派發——LLM 直接驅動 render_*/zeta_*）
+add_library(LLMToolBridge STATIC AI/LLMToolBridge.cpp)
+target_include_directories(LLMToolBridge PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries(LLMToolBridge LLMIntegration ToolFramework)
+
 if(POTATO_TESTS)
 # RenderingServer——RID 代際、canvas 剔除/z-order、scene cull、
 # dummy rasterizer 指令流、agent 工具端到端（全 headless）
@@ -359,6 +371,23 @@ add_executable(ZetaAgentToolsTest Examples/ZetaAgentToolsTest.cpp)
 target_include_directories(ZetaAgentToolsTest PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(ZetaAgentToolsTest ZetaAgentTools ToolFramework)
 add_test(NAME ZetaAgentToolsTest COMMAND ZetaAgentToolsTest)
+
+# Riemann 第三/四波驗證（headless——MathUtils/RiemannZeta 數值核）
+add_executable(RiemannExplorer3Test Examples/RiemannExplorer3Test.cpp)
+target_include_directories(RiemannExplorer3Test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(RiemannExplorer3Test PotatoRendering)
+add_test(NAME RiemannExplorer3Test COMMAND RiemannExplorer3Test)
+
+add_executable(RiemannExplorer4Test Examples/RiemannExplorer4Test.cpp)
+target_include_directories(RiemannExplorer4Test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(RiemannExplorer4Test PotatoRendering)
+add_test(NAME RiemannExplorer4Test COMMAND RiemannExplorer4Test)
+
+# LLM function-calling ↔ ToolRegistry 橋測試（headless）
+add_executable(LLMToolBridgeTest Examples/LLMToolBridgeTest.cpp)
+target_include_directories(LLMToolBridgeTest PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(LLMToolBridgeTest LLMToolBridge ZetaAgentTools ToolFramework LLMIntegration)
+add_test(NAME LLMToolBridgeTest COMMAND LLMToolBridgeTest)
 endif() # POTATO_TESTS
 
 # MingGoRTS IDE 智能建議系統
