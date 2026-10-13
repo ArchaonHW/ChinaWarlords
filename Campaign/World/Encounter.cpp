@@ -29,7 +29,7 @@ namespace {
 bool KnownTopKey(std::string_view k) {
     return k == "schema" || k == "id" || k == "node" ||
            k == "trigger" || k == "map" || k == "defenders" ||
-           k == "stakes" || k == "seed";
+           k == "stakes" || k == "seed" || k == "prior";
 }
 bool KnownDefenderKey(std::string_view k) {
     return k == "template" || k == "region" || k == "deck";
@@ -203,6 +203,15 @@ Result<EncounterDef> ParseEncounter(const JsonValue& doc) {
         }
         e.hasSeed = true;
         e.seed = SeedFromWire(s.AsInt());
+    }
+    if (doc.Has("prior")) {
+        const std::string* p = doc.FindString("prior");
+        if (!p || !RivalPriorFromName(*p, e.prior)) {
+            return Gameplay::Fail<EncounterDef>(
+                "field",
+                "prior must be aggressive|defensive|cunning");
+        }
+        e.hasPrior = true;
     }
     return Gameplay::Ok(std::move(e));
 }

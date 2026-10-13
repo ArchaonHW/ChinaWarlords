@@ -69,20 +69,20 @@ std::vector<DossierClaim> DossierClaims(const GeneralDossier& d) {
                                                              : 0;
     std::vector<DossierClaim> claims;
     if (d.chaptersObserved <= 0) {
-        claims.push_back({ClaimKind::Repute,
+        claims.push_back({DossierClaimKind::Repute,
                           "其人未詳，僅聞其名", 0, false});
         return claims;
     }
-    claims.push_back({ClaimKind::Temperament,
+    claims.push_back({DossierClaimKind::Temperament,
                       std::string(TemperamentText(d.prior)), tier,
                       false});
     TriggerKind dominant = TriggerKind::Always;
     if (DominantTrigger(d.triggers, dominant)) {
-        claims.push_back({ClaimKind::Habit,
+        claims.push_back({DossierClaimKind::Habit,
                           std::string(HabitText(dominant)), tier,
                           false});
     }
-    claims.push_back({ClaimKind::Repute,
+    claims.push_back({DossierClaimKind::Repute,
                       tier ? "其名久聞於軍中，言人人殊"
                            : "其名始聞，蹤跡未明",
                       tier, false});
@@ -90,7 +90,7 @@ std::vector<DossierClaim> DossierClaims(const GeneralDossier& d) {
 }
 
 std::string RenderDossier(const GeneralDossier& d,
-                          std::span<const ClaimKind> provenWrong) {
+                          std::span<const DossierClaimKind> provenWrong) {
     std::string s = "聞冊·";
     s += d.id;
     s += "\n";

@@ -731,6 +731,13 @@ add_executable(potato_test_title Examples/potato_test_title.cpp)
 target_include_directories(potato_test_title PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(potato_test_title PotatoGame)
 add_test(NAME potato_test_title COMMAND potato_test_title)
+
+# Story 13.6 — battle session (marshal → deploy → 20 Hz pump → close)
+add_executable(potato_test_battlesession
+    Examples/potato_test_battlesession.cpp)
+target_include_directories(potato_test_battlesession PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(potato_test_battlesession PotatoGame)
+add_test(NAME potato_test_battlesession COMMAND potato_test_battlesession)
 endif() # POTATO_TESTS
 
 if(POTATO_BUILD_GUI)

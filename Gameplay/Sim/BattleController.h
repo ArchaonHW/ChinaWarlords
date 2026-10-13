@@ -172,6 +172,34 @@ public:
         assert(side == 0 || side == 1);
         return fog_[side == 1 ? 1 : 0];
     }
+    // Truth-side resolution of a belief handle: which squad the
+    // observing side's cloud `cloudId` tracks (-1 = no such
+    // cloud). Presentation hands in the cloud it can SEE; the
+    // truth<->cloud mapping stays here where it lives — the UI
+    // never dereferences an enemy squad index it couldn't see.
+    int SquadForCloud(int side, int cloudId) const {
+        assert(side == 0 || side == 1);
+        const auto& of = cloudOf_[side == 1 ? 1 : 0];
+        for (std::size_t i = 0; i < of.size(); ++i) {
+            if (of[i] == cloudId) {
+                return static_cast<int>(i);
+            }
+        }
+        return -1;
+    }
+
+    // Sheet surface for the Override target pick and the probe
+    // pip display — read-only, index-validated is the caller's
+    // discipline (sheets aren't truth-protected; they're the
+    // doctrine table the player authored).
+    const SquadSheet& SheetOf(std::size_t squadIndex) const {
+        assert(squadIndex < sheets_.size());
+        return sheets_[squadIndex];
+    }
+    int ProbesLeft(int side) const {
+        assert(side == 0 || side == 1);
+        return probeBudget_[side == 1 ? 1 : 0];
+    }
 
     // End-to-end determinism fingerprint: sim stream checksum folded
     // with per-squad numeric state, beat, CP pools, and the pending

@@ -2,7 +2,11 @@
 // Table-gated narrative moves, the always-legal abandon door, the
 // pause overlay flag, and the save gating that keeps I/O off the
 // tick path.
+#include "Game/Ui/EndingScreen.h"
 #include "Game/Ui/ScreenFlow.h"
+#include "Game/Ui/PauseOverlay.h"
+#include "Game/Ui/TitleScreen.h"
+#include "Campaign/Ledger/Ledger.h"
 
 #include <cstdio>
 
@@ -174,6 +178,114 @@ int main() {
         Check(!f.CanSave(), "settlement can't save mid-ceremony");
         f.Request(ScreenId::Ending);
         Check(!f.CanSave(), "ending can't save");
+    }
+
+    // ===== 13.8: pause overlay widget model =====
+    {
+        // Save gating flows straight from ScreenFlow::CanSave —
+        // the overlay never re-derives the rule.
+        ScreenFlow f;
+        f.Request(ScreenId::Overworld);
+
+        Potato::Game::TitleSlotInfo slots[2];
+        slots[0].slot = 0;
+        slots[0].label = "甲帥 · Day 3";
+        slots[0].occupied = true;
+        slots[1].slot = 3;
+        slots[1].label = "乙帥 · Day 9";
+        slots[1].occupied = true;
+
+        Potato::Game::PauseInput in;
+        in.canSave = f.CanSave();
+        in.slots = slots;
+        auto lay = Potato::Game::BuildPauseLayout(in);
+        Check(lay.widgets.size() == 5 + 2,
+              "overlay: actions + one row per present slot");
+        const Potato::Game::PauseWidget* save = nullptr;
+        int loads = 0;
+        for (const auto& w : lay.widgets) {
+            if (w.action == Potato::Game::PauseAction::Save) {
+                save = &w;
+            }
+            if (w.action == Potato::Game::PauseAction::LoadSlot) {
+                ++loads;
+            }
+        }
+        Check(save != nullptr && save->enabled,
+              "overlay: save lit on the overworld");
+        Check(loads == 2, "overlay: two load-slot rows");
+
+        // Hit-test: a load row carries its slot in aux.
+        const auto* hit =
+            lay.Hit(lay.widgets[2].x + 4, lay.widgets[2].y + 4);
+        Check(hit != nullptr &&
+                  hit->action ==
+                      Potato::Game::PauseAction::LoadSlot &&
+                  hit->aux == 0,
+              "overlay: slot row hit carries slot index");
+        Check(lay.Hit(-1, -1) == nullptr,
+              "overlay: outside hits nothing");
+
+        // Off the save-legal screens the same layout dims.
+        f.Request(ScreenId::Battle);
+        f.NoteBattleBeat(BattleBeat::Execution);
+        in.canSave = f.CanSave();
+        lay = Potato::Game::BuildPauseLayout(in);
+        save = nullptr;
+        for (const auto& w : lay.widgets) {
+            if (w.action == Potato::Game::PauseAction::Save) {
+                save = &w;
+            }
+        }
+        Check(save != nullptr && !save->enabled,
+              "overlay: execution dims save — dimmed, not hidden");
+        in.canSave = false;
+        lay = Potato::Game::BuildPauseLayout(in);
+        Check(lay.widgets[1].action ==
+                      Potato::Game::PauseAction::Save &&
+                  !lay.widgets[1].enabled,
+              "overlay: title-side save dims");
+    }
+
+    // ===== 13.9: ending folio view-model =====
+    {
+        // Clean book → 信史; the folio is a pure fold of the
+        // ledger — tampered books earn their own voice.
+        Potato::Campaign::Ledger ledger;
+        Potato::Campaign::Posting p;
+        p.credit = {Potato::Campaign::Account::Materiel, 10};
+        p.debit = {Potato::Campaign::Account::ArmyPrestige, 10};
+        p.memo = "entry";
+        Check(ledger.Post(p).ok(), "folio: honest post");
+        auto page = Potato::Game::BuildEndingPage(ledger, 960, 600);
+        Check(page.voice == Potato::Campaign::EndingVoice::Believed &&
+                  page.title == "信史" && !page.text.empty(),
+              "folio: clean book reads 信史");
+        Check(page.HitReturn(page.returnX + 4, page.returnY + 4) &&
+                  !page.HitReturn(0, 0),
+              "folio: return-to-title hit-test");
+
+        // Doubt — a suspect flag drops the voice to 疑史.
+        Check(ledger.SetSuspect(0), "folio: suspect flag");
+        page = Potato::Game::BuildEndingPage(ledger, 960, 600);
+        Check(page.voice == Potato::Campaign::EndingVoice::Doubted &&
+                  page.title == "疑史",
+              "folio: suspect book reads 疑史");
+
+        // Forgery outranks doubt — the harsher verdict wins.
+        Check(ledger.Forge(p).ok(), "folio: forged post");
+        page = Potato::Game::BuildEndingPage(ledger, 960, 600);
+        Check(page.voice == Potato::Campaign::EndingVoice::Forged &&
+                  page.title == "偽史",
+              "folio: forged book reads 偽史");
+        Check(std::string(Potato::Game::EndingVoiceTitle(
+                  Potato::Campaign::EndingVoice::Abandoned)) ==
+                  "絕筆",
+              "folio: abandoned title");
+
+        // The folio hands back to S0 — Ending→Title is in the
+        // table (already pinned); the page's HitReturn is the
+        // widget that issues it.
     }
 
     std::printf("%s\n", failures == 0 ? "ALL PASS" : "FAILURES");

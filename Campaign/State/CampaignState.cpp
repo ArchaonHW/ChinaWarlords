@@ -152,6 +152,24 @@ Result<JsonValue> CampaignState::ToJson() const {
     if (hasCharacter_) {
         o["character"] = character_.ToJson();
     }
+    // Resident stores — always emitted (a save is one document;
+    // empty stores are honest state, not absence). Each rides
+    // its own versioned schema inside the envelope.
+    o["intel"] = intel_.ToJson();
+    {
+        Result<JsonValue> m = myth_.ToJson();
+        if (!m.ok()) {
+            return Gameplay::Fail<JsonValue>("myth", m.reason);
+        }
+        o["myth"] = std::move(m.value);
+    }
+    {
+        Result<JsonValue> c = codex_.ToJson();
+        if (!c.ok()) {
+            return Gameplay::Fail<JsonValue>("codex", c.reason);
+        }
+        o["codex"] = std::move(c.value);
+    }
     return Gameplay::Ok(JsonValue::MakeObject(std::move(o)));
 }
 
@@ -205,6 +223,33 @@ Result<CampaignState> CampaignState::FromJson(
         }
         st.character_ = std::move(ch.value);
         st.hasCharacter_ = true;
+    }
+    // Resident stores: absent stays empty (saves predate them);
+    // present-but-invalid rejects the whole envelope — a broken
+    // chronicle must not silently vanish.
+    if (doc.Has("intel")) {
+        Result<IntelLedger> i = IntelLedger::FromJson(doc["intel"]);
+        if (!i.ok()) {
+            return Gameplay::Fail<CampaignState>(i.error,
+                                                 i.reason);
+        }
+        st.intel_ = std::move(i.value);
+    }
+    if (doc.Has("myth")) {
+        Result<MythLog> m = MythLog::FromJson(doc["myth"]);
+        if (!m.ok()) {
+            return Gameplay::Fail<CampaignState>(m.error,
+                                                 m.reason);
+        }
+        st.myth_ = std::move(m.value);
+    }
+    if (doc.Has("codex")) {
+        Result<BencaoCodex> c = BencaoCodex::FromJson(doc["codex"]);
+        if (!c.ok()) {
+            return Gameplay::Fail<CampaignState>(c.error,
+                                                 c.reason);
+        }
+        st.codex_ = std::move(c.value);
     }
     return Gameplay::Ok(std::move(st));
 }
