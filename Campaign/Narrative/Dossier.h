@@ -15,15 +15,18 @@ namespace Potato::Campaign {
 // each claim carries a confidence tier that later facts can
 // overturn — the dossier admits it may be wrong.
 
-enum class ClaimKind : std::uint8_t {
+// DossierClaimKind, not ClaimKind — the mint chain already
+// spends that name on its own wire vocabulary (MintClaim.h);
+// these are the rumor-taxonomy kinds.
+enum class DossierClaimKind : std::uint8_t {
     Temperament = 0, // who the rumors say they are (prior)
     Habit = 1,       // what their scouts say about us (triggers)
     Repute = 2,      // how long the name has circulated
 };
-constexpr std::size_t kClaimKindCount = 3;
+constexpr std::size_t kDossierClaimKindCount = 3;
 
 struct DossierClaim {
-    ClaimKind kind = ClaimKind::Temperament;
+    DossierClaimKind kind = DossierClaimKind::Temperament;
     std::string text; // hearsay-marked sentence
     // 0 = 風聞未確 (thin rumor), 1 = 屢聞 (pattern held across
     // MIN_CHAPTERS_TO_LEARN chapters). The tracked uncertainty —
@@ -42,6 +45,6 @@ std::vector<DossierClaim> DossierClaims(const GeneralDossier& d);
 // (the rumor is corrected, not erased).
 std::string RenderDossier(
     const GeneralDossier& d,
-    std::span<const ClaimKind> provenWrong = {});
+    std::span<const DossierClaimKind> provenWrong = {});
 
 } // namespace Potato::Campaign

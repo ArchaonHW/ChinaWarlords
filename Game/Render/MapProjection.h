@@ -47,6 +47,12 @@ public:
         return edges_;
     }
     bool Hinted() const { return hinted_; }
+    // Inverse lookup (Epic 13 input): pixel -> nearest region
+    // whose projected center lies within `radius` px; -1 when
+    // nothing is near. Distance is squared-integer; ties break
+    // to the lowest index — canonical order, like everything
+    // else.
+    int Hit(int x, int y, int radius) const;
 
 private:
     std::vector<ProjectedRegion> regions_;

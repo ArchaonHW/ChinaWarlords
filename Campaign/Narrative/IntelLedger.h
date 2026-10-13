@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Campaign/Narrative/Dossier.h" // ClaimKind
+#include "Campaign/Narrative/Dossier.h" // DossierClaimKind
 #include "Gameplay/Json/JsonValue.h"
 #include "Gameplay/Result.h"
 
@@ -30,7 +30,7 @@ bool IntelVerdictFromName(std::string_view name, IntelVerdict& out);
 // keyed kinds map to Dossier claim kinds for the proven-wrong
 // seam; the others feed fog priors at briefing.
 enum class IntelKind : std::uint8_t {
-    RivalTemperament = 0, // "the fox is cautious" -> ClaimKind::Temperament
+    RivalTemperament = 0, // "the fox is cautious" -> DossierClaimKind::Temperament
     RivalHabit = 1,       // "their scouts think we press" -> Habit
     EnemyDisposition = 2, // "enemy massing at the ford" -> fog seed
     TerrainIntel = 3,     // "the eastern road is passable" -> fog seed
@@ -80,8 +80,8 @@ public:
     int DistortionFor(std::string_view subject) const;
 
     // 6.3 seam — false verdicts on rival-keyed kinds map to
-    // ClaimKind values RenderDossier annotates.
-    std::vector<ClaimKind> ProvenWrongFor(
+    // DossierClaimKind values RenderDossier annotates.
+    std::vector<DossierClaimKind> ProvenWrongFor(
         std::string_view subject) const;
 
     // Unresolved claims for a subject — briefing-time intel that

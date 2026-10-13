@@ -96,4 +96,20 @@ MapProjection::Build(const BattleMap& map, int w, int h,
     return Gameplay::Ok(std::move(p));
 }
 
+int MapProjection::Hit(int x, int y, int radius) const {
+    if (radius < 0) return -1;
+    const std::int64_t rr = static_cast<std::int64_t>(radius) * radius;
+    int best = -1;
+    std::int64_t bestD = rr + 1;
+    for (const ProjectedRegion& r : regions_) {
+        const std::int64_t dx = x - r.x, dy = y - r.y;
+        const std::int64_t d = dx * dx + dy * dy;
+        if (d <= rr && d < bestD) { // < keeps lowest index on ties
+            bestD = d;
+            best = static_cast<int>(r.index);
+        }
+    }
+    return best;
+}
+
 } // namespace Potato::Game

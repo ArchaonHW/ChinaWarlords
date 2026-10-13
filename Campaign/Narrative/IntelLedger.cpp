@@ -107,21 +107,21 @@ int IntelLedger::DistortionFor(std::string_view subject) const {
     return static_cast<int>(provenFalse * 100 / resolved);
 }
 
-std::vector<ClaimKind>
+std::vector<DossierClaimKind>
 IntelLedger::ProvenWrongFor(std::string_view subject) const {
-    std::vector<ClaimKind> out;
+    std::vector<DossierClaimKind> out;
     for (const IntelEntry& e : entries_) {
         if (e.subject != subject ||
             e.verdict != IntelVerdict::False) {
             continue;
         }
-        ClaimKind kind;
+        DossierClaimKind kind;
         bool map = false;
         if (e.kind == IntelKind::RivalTemperament) {
-            kind = ClaimKind::Temperament;
+            kind = DossierClaimKind::Temperament;
             map = true;
         } else if (e.kind == IntelKind::RivalHabit) {
-            kind = ClaimKind::Habit;
+            kind = DossierClaimKind::Habit;
             map = true;
         }
         if (map &&

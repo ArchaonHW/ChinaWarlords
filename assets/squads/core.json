@@ -1,0 +1,11 @@
+{
+    "schema": "potato.squad/1",
+    "squads": [
+        {"id": "militia", "name": "民團", "unit": "infantry",
+         "hp": 60, "attack": 6, "speed": "medium", "cost": 30},
+        {"id": "vanguard", "name": "先鋒營", "unit": "infantry",
+         "hp": 100, "attack": 10, "speed": "medium", "cost": 40},
+        {"id": "riders", "name": "輕騎隊", "unit": "cavalry",
+         "hp": 80, "attack": 12, "speed": "fast", "cost": 60}
+    ]
+}

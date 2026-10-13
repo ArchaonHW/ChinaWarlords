@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Campaign/World/WorldMap.h"
+#include "Campaign/Rivals/RivalDeck.h" // RivalPrior vocabulary
 #include "Gameplay/Doctrine/Doctrine.h" // SquadSheet (by value)
 #include "Gameplay/Fog/QuantumFog.h"    // FogConfig
 #include "Gameplay/Json/JsonValue.h"
@@ -38,7 +39,7 @@ struct Character;
 //    "node":"longmen","trigger":"arrival","map":"ch01_plain",
 //    "defenders":[{"template":"militia","region":1,
 //                  "deck":["card_hold","card_brace","card_flee"]}],
-//    "stakes":{"control":"player"},"seed":0}
+//    "stakes":{"control":"player"},"seed":0,"prior":"cunning"}
 enum class EncounterTrigger : std::uint8_t {
     Arrival = 0,   // warband stands on the node
     Proximity = 1, // warband at or adjacent to the node
@@ -63,6 +64,10 @@ struct EncounterDef {
     WorldControl controlStake = WorldControl::Neutral;
     bool hasSeed = false;            // authored seed overrides the
     std::uint64_t seed = 0;          // caller-supplied seed
+    // Defender personality (shell drives the symmetric AI with
+    // it — biases choices, never stats). Absent = host default.
+    bool hasPrior = false;
+    RivalPrior prior = RivalPrior::Defensive;
 };
 
 struct RejectedEncounter {

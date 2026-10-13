@@ -6,8 +6,9 @@
     "map": "field",
     "defenders": [
         {"template": "militia", "region": 1,
-         "deck": ["card_hold", "card_brace", "card_flee"]}
+         "deck": ["ord_hold", "ord_brace10", "ord_second_wind"]}
     ],
     "stakes": {"control": "player"},
-    "seed": 4242
+    "seed": 4242,
+    "prior": "cunning"
 }

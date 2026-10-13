@@ -2,6 +2,9 @@
 
 #include "Campaign/Characters/Character.h"
 #include "Campaign/Ledger/Ledger.h"
+#include "Campaign/Myth/MythLog.h"
+#include "Campaign/Narrative/BencaoCodex.h"
+#include "Campaign/Narrative/IntelLedger.h"
 #include "Campaign/World/WorldState.h"
 #include "Gameplay/Json/JsonValue.h"
 #include "Gameplay/Result.h"
@@ -47,6 +50,10 @@ struct RosterEntry {
 // verbatim and `character` carries the chosen commander's
 // `potato.character/1` doc. Both absent == no world bound / no
 // commander chosen — a worldless campaign stays byte-minimal.
+// `intel`/`myth`/`codex` are resident stores (potato.intel/1,
+// potato.mythlog/1, potato.bencao_state/1 verbatim): always
+// emitted, absent-on-load means empty — saves written before
+// they existed carry no flag and lose nothing.
 // Old /1 files reject at the schema gate; no migration in v1.0.
 // Neither embedded id is reconciled against content registries
 // here — world.id matching the loaded WorldMap and character.id
@@ -101,6 +108,19 @@ public:
         hasCharacter_ = false;
     }
 
+    // Resident side-stores — the intel chronicle (6.4), the myth
+    // chronicle (5.4), and the codex's grown/waiting pages
+    // (10.2/10.3). Always live like the ledger itself: emitted on
+    // every save; saves written before they existed load them
+    // empty. One owner, no sync copies — the shell reads and
+    // writes these through the facade.
+    IntelLedger& GetIntel() { return intel_; }
+    const IntelLedger& GetIntel() const { return intel_; }
+    MythLog& GetMyth() { return myth_; }
+    const MythLog& GetMyth() const { return myth_; }
+    BencaoCodex& GetCodex() { return codex_; }
+    const BencaoCodex& GetCodex() const { return codex_; }
+
     Gameplay::Result<Gameplay::JsonValue> ToJson() const;
     static Gameplay::Result<CampaignState> FromJson(
         const Gameplay::JsonValue& doc);
@@ -113,6 +133,9 @@ private:
     WorldState world_;
     bool hasCharacter_ = false;
     Character character_;
+    IntelLedger intel_;
+    MythLog myth_;
+    BencaoCodex codex_;
 };
 
 } // namespace Potato::Campaign

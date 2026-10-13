@@ -62,6 +62,9 @@ lib/
 ehthumbs.db
 Thumbs.db
 Desktop.ini
+# Windows reserved device name — `> nul` redirects under MSYS/Git Bash
+# create a real file instead of hitting the null device
+nul
 
 # Temporary files
 *.tmp
@@ -110,6 +113,8 @@ TestReports/
 Generated/
 Temp/
 Backup_*
+# Runtime game saves (save_<slot>.json / .json.tmp)
+saves/
 
 # MintRelayer (Story 11.4) — dev-wallet config & run artifacts
 Tools/MintRelayer/node_modules/

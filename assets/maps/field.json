@@ -1,0 +1,23 @@
+{
+    "schema": "potato.map/1",
+    "id": "field",
+    "name": "龍門郊野",
+    "regions": [
+        {"id": "west_road", "name": "西道",
+         "terrain": ["road", "open"], "center": [80, 300]},
+        {"id": "zheng_village", "name": "鄭家村",
+         "terrain": ["open"], "strategic": ["village"],
+         "center": [260, 240]},
+        {"id": "shrine_hill", "name": "龍門麓",
+         "terrain": ["highland"], "myth": ["shrine"],
+         "center": [440, 140]},
+        {"id": "east_field", "name": "東原",
+         "terrain": ["open"], "center": [620, 300]}
+    ],
+    "edges": [
+        ["west_road", "zheng_village"],
+        ["zheng_village", "shrine_hill"],
+        ["shrine_hill", "east_field"],
+        ["zheng_village", "east_field"]
+    ]
+}
