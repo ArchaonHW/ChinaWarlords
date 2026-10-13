@@ -26,7 +26,7 @@ Gameplay::Result<ChapterSettlement> ResolveAftermath(
     std::span<const Gameplay::SimEvent> deeds,
     const std::vector<AftermathRow>& casualties,
     std::uint64_t recordRoot,
-    MythLog* mythLog) {
+    MythLog* mythLog, bool subverted) {
     // Preflight before ANY mutation — every mutating stage below is
     // unfailable once these pass.
     //  - the battle must carry its record anchor (and must not
@@ -108,7 +108,7 @@ Gameplay::Result<ChapterSettlement> ResolveAftermath(
     //    posts the resolution anchored to the battle record,
     //    advances. Preflighted to succeed.
     const auto res =
-        ConcludeChapter(state, lib, battleWon, recordRoot);
+        ConcludeChapter(state, lib, battleWon, recordRoot, subverted);
     if (!res.ok()) {
         return Gameplay::Fail<ChapterSettlement>(res.error,
                                                  res.reason);

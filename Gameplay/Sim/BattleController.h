@@ -104,6 +104,17 @@ public:
     Result<bool> IssueMythPacify(int side, std::size_t region);
     Result<bool> IssueMythPossession(int side, int squadIndex);
     Result<bool> IssueGhostArmy(int side, std::size_t region);
+    // Subversion (Epic 7) — turn a wavering ENEMY squad to `side`.
+    // 0 CP: mercy is free; the 賞金 bounty posts to the ledger as
+    // the deed's legs at settlement (Execute's mirror rule).
+    // The target must be shaken — Routing, or cohesion below
+    // SUBVERT_COHESION — and the persuading side needs an effective
+    // Holding squad standing in the victim's region (checked at
+    // issue AND apply — mercy by absence, Execute's symmetry).
+    // On apply the squad flips side and stands down to Holding;
+    // a SquadDefected deed event records it. A battle whose losing
+    // side defected ENTIRELY closes as CloseReason::Subversion.
+    Result<bool> IssueSubvert(int side, int squadIndex);   // 0 CP
 
     // Planning-only intel hook (briefing/tests): overwrite a cloud's
     // believed region + certainty in `fogSide`'s view for `squadIndex`

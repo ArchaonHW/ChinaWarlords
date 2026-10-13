@@ -18,6 +18,9 @@ constexpr std::int64_t kSealAmount = 1;
 //   governance victory: 民心一分凝為天命 (support consolidates)
 //   battle victory:     軍威以物資記   (glory paid in supply)
 //   defeat:             收殮得物資，軍威折損 (salvage; prestige bleeds)
+//   subversion:         軍威化為天命   (a won threat becomes mandate —
+//                        the enemy yielded TO the standing, so
+//                        prestige converts upward without bloodshed)
 Posting SealPosting(ChapterResolution r, std::int64_t chapter,
                     std::uint64_t recordRoot) {
     Posting p;
@@ -35,6 +38,10 @@ Posting SealPosting(ChapterResolution r, std::int64_t chapter,
         break;
     case ChapterResolution::Defeat:
         p.credit = {Account::Materiel, kSealAmount};
+        p.debit = {Account::ArmyPrestige, kSealAmount};
+        break;
+    case ChapterResolution::Subversion:
+        p.credit = {Account::Mandate, kSealAmount};
         p.debit = {Account::ArmyPrestige, kSealAmount};
         break;
     }
@@ -59,6 +66,8 @@ const char* ResolutionName(ChapterResolution r) {
         return "governance_victory";
     case ChapterResolution::Defeat:
         return "defeat";
+    case ChapterResolution::Subversion:
+        return "subversion";
     }
     return "unknown";
 }
@@ -70,7 +79,7 @@ bool IsGovernanceVictory(const GovernanceAccumulators& a) {
 
 Gameplay::Result<ChapterResolution> ConcludeChapter(
     CampaignState& state, const ChapterLibrary& lib, bool battleWon,
-    std::uint64_t recordRoot) {
+    std::uint64_t recordRoot, bool subverted) {
     // Shared gate predicate — same list ResolveAndAdvance enforces,
     // so post-seal advance cannot fail (the two can't drift).
     std::string_view error;
@@ -92,7 +101,8 @@ Gameplay::Result<ChapterResolution> ConcludeChapter(
     const ChapterResolution r =
         IsGovernanceVictory(a)
             ? ChapterResolution::GovernanceVictory
-            : (battleWon ? ChapterResolution::BattleVictory
+            : (battleWon ? (subverted ? ChapterResolution::Subversion
+                                      : ChapterResolution::BattleVictory)
                          : ChapterResolution::Defeat);
 
     const std::int64_t chapter = state.GetChapter().current;

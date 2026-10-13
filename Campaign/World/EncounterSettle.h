@@ -60,11 +60,17 @@ struct EncounterSettlement {
 // queue has room, the resolved set has room, and the seal's
 // "encounter:"/"region:" tags fit MAX_TAG_LEN. Either the whole
 // settlement lands or nothing does.
+// `subverted` (Epic 7) marks a battleWon earned by wholesale
+// defection (BattleResult::subverted) — the verdict seals
+// "resolution:subversion" instead of "battle_victory"; the ledger
+// still decides first (governance thresholds outrank even a
+// bloodless win).
 Gameplay::Result<EncounterSettlement> SettleEncounter(
     CampaignState& state, WorldState& ws, const WorldMap& world,
     const EncounterDef& enc, bool battleWon, int playerSide,
     std::span<const Gameplay::SimEvent> deeds,
     const std::vector<AftermathRow>& casualties,
-    std::uint64_t recordRoot, MythLog* mythLog = nullptr);
+    std::uint64_t recordRoot, MythLog* mythLog = nullptr,
+    bool subverted = false);
 
 } // namespace Potato::Campaign

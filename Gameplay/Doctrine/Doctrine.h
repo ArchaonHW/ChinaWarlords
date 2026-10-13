@@ -133,6 +133,11 @@ struct SimEvent {
         // the ghost host's banner (-1 for wild); squadIndex = -1 —
         // the myth layer is side-less as an actor.
         MythInvasion,
+        // Squad defection (Epic 7): a queued Subvert intervention
+        // applied — the victim's banner flipped to the persuader's.
+        // Emitted during intervention apply (step 0). param = region,
+        // squadIndex = the defector, side = the side it turned TO.
+        SquadDefected,
     };
 
     Kind kind = Kind::CardFired;
@@ -148,7 +153,8 @@ struct SimEvent {
     // param = the squad's region at issue (journal/checksum only —
     // apply re-derives). aux = InterventionKind ordinal (0=Redirect,
     // 1=Override, 2=Retreat, 3=Probe, 4=Entangle, 5=Replan, 6=Execute,
-    // 7=MythPacify, 8=MythPossession, 9=MythGhostArmy — wire stable).
+    // 7=MythPacify, 8=MythPossession, 9=MythGhostArmy, 10=Subvert —
+    // wire stable).
     int param = -1;
     // BeatChanged: new BattleBeat ordinal — wire-format stable
     // (Planning=0, Execution=1, Aftermath=2; recorder/replay depends on it).

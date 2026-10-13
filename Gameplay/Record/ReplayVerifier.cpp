@@ -89,6 +89,9 @@ bool ReIssue(BattleController& bc, const SimEvent& e) {
             r = bc.IssueGhostArmy(e.side,
                                   static_cast<std::size_t>(e.param));
             break;
+        case InterventionKind::Subvert:
+            r = bc.IssueSubvert(e.side, e.squadIndex);
+            break;
     }
     return r.ok() && r.value;
 }

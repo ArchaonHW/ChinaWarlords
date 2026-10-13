@@ -34,10 +34,21 @@ enum class InterventionKind : std::uint8_t {
                     // releases the shrine's allegiance latch
     MythPossession, // squadIndex = own squad to possess
     MythGhostArmy,  // target = region; raises a spirit garrison
+    // Epic 7 — 不戰: subversion is the mercy mirror of Execute.
+    // squadIndex = the ENEMY squad to turn; 0 CP — mercy is free:
+    // the bounty posts to the ledger as the deed's legs at
+    // settlement (same rule Execute set: cruelty is free, the
+    // atrocity posting is the price).
+    Subvert,
 };
 
 // Probes are limited per battle (GDD: ~2-3), not by CP.
 constexpr int PROBE_BUDGET = 3;
+
+// Subvert reach (Epic 7): only a wavering squad turns — Routing, or
+// standing but shaken below this cohesion line. A coherent enemy
+// cannot be bought; persuasion needs cracks to work on.
+constexpr int SUBVERT_COHESION = 40;
 
 constexpr int CostOf(InterventionKind k) {
     switch (k) { // no default: new kinds must pick a cost
@@ -52,6 +63,7 @@ constexpr int CostOf(InterventionKind k) {
         case InterventionKind::MythPacify:
         case InterventionKind::MythPossession:
         case InterventionKind::MythGhostArmy: return 0; // paid in 天命
+        case InterventionKind::Subvert: return 0; // paid in 賞金 (ledger)
     }
     return 0; // unreachable — all enumerators handled
 }

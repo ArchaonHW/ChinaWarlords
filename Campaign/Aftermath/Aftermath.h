@@ -47,6 +47,10 @@ struct ChapterSettlement {
 // `battleWon` is the chapter's field/objective outcome — a defeat
 // still seals and advances (converted defeat is a chapter outcome;
 // recovery is next-chapter + RefitCamp, not a reload).
+// `subverted` marks a battleWon earned by wholesale defection or
+// negotiation (Epic 7): the caller reads BattleResult::subverted
+// (or a zero-combat chapter's deterrence eval) and the verdict
+// seals "resolution:subversion" instead of "battle_victory".
 // `playerSide` must be 0 or 1 — validated in preflight, before any
 // mutation. Settling the final chapter yields `nextChapter` equal
 // to the campaign-complete sentinel (continuation is vacuous
@@ -68,7 +72,7 @@ Gameplay::Result<ChapterSettlement> ResolveAftermath(
     std::span<const Gameplay::SimEvent> deeds,
     const std::vector<AftermathRow>& casualties,
     std::uint64_t recordRoot,
-    MythLog* mythLog = nullptr);
+    MythLog* mythLog = nullptr, bool subverted = false);
 
 // A settled battle's record root anchors its resolution seal —
 // finding it already in the ledger means this battle was already
