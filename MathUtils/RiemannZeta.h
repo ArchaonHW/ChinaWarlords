@@ -180,6 +180,22 @@ inline C Chi5L(const C& s) {
             HurwitzEMN(s, 0.6, N) + HurwitzEMN(s, 0.8, N));
 }
 
+// mod 7 實特徵 χ₋₇（Kronecker (n|7)）：二次剩餘 {1,2,4},
+// 非剩餘 {3,5,6}——對應虛二次體 Q(√−7)（類數 h=1）
+inline const int kChi7Res[8] = {0, 1, 1, -1, 1, -1, -1, 0};
+
+// L(s,χ₋₇) = 7^{−s}Σ_r χ(r)ζ(s,r/7)——同 χ₅ 的 Hurwitz 分解
+inline C Chi7L(const C& s) {
+    const int N = 200;
+    return PowNeg(7.0, s) *
+           (HurwitzEMN(s, 1.0 / 7, N) +
+            HurwitzEMN(s, 2.0 / 7, N) -
+            HurwitzEMN(s, 3.0 / 7, N) +
+            HurwitzEMN(s, 4.0 / 7, N) -
+            HurwitzEMN(s, 5.0 / 7, N) -
+            HurwitzEMN(s, 6.0 / 7, N));
+}
+
 // digamma ψ(x)：遞迴平移 ψ(x+1)=ψ(x)+1/x 到 x≥8,
 // 再漸近 ln x − 1/(2x) − Σ B_{2k}/(2k·x^{2k})
 inline double Digamma(double x) {
@@ -196,6 +212,15 @@ inline double Digamma(double x) {
 inline double Chi5LAt1() {
     return -(Digamma(0.2) - Digamma(0.4) - Digamma(0.6) +
              Digamma(0.8)) / 5.0;
+}
+
+// L(1,χ₋₇) = −Σ_r χ(r)ψ(r/7)/7（極點扣除,同 χ₅ 推導）
+// 類數公式：L(1,χ₋₇)=π/√7（Q(√−7) h=1,w=2）
+inline double Chi7LAt1() {
+    return -(Digamma(1.0 / 7) + Digamma(2.0 / 7) -
+             Digamma(3.0 / 7) + Digamma(4.0 / 7) -
+             Digamma(5.0 / 7) - Digamma(6.0 / 7)) /
+           7.0;
 }
 
 // 密集取樣精修 |f| 極小點：以 c±halfW 21 點取 argmin，

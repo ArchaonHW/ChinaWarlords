@@ -203,25 +203,35 @@ std::vector<std::string> AgentChain::GetValidationErrors() {
 }
 
 ChainResult AgentChain::ExecuteNode(const ChainNode& node) {
+    ChainResult result;
     switch (node.type) {
         case ChainNodeType::Agent:
-            return ExecuteAgentNode(node);
+            result = ExecuteAgentNode(node);
+            break;
         case ChainNodeType::LLM:
-            return ExecuteLLMNode(node);
+            result = ExecuteLLMNode(node);
+            break;
         case ChainNodeType::Tool:
-            return ExecuteToolNode(node);
+            result = ExecuteToolNode(node);
+            break;
         case ChainNodeType::Condition:
-            return ExecuteConditionNode(node);
+            result = ExecuteConditionNode(node);
+            break;
         case ChainNodeType::Loop:
-            return ExecuteLoopNode(node);
+            result = ExecuteLoopNode(node);
+            break;
         case ChainNodeType::Parallel:
-            return ExecuteParallelNode(node);
+            result = ExecuteParallelNode(node);
+            break;
         default:
-            ChainResult result;
             result.success = false;
             result.error = "Unknown node type";
-            return result;
     }
+    if (onNodeComplete) {
+        onNodeComplete(node.id,
+            result.success ? result.output : ("ERROR:" + result.error));
+    }
+    return result;
 }
 
 ChainResult AgentChain::ExecuteAgentNode(const ChainNode& node) {
