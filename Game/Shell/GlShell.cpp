@@ -193,6 +193,11 @@ bool GlShell::ShouldClose() const {
                static_cast<GLFWwindow*>(window_)) != 0;
 }
 
+void GlShell::ResizeWindow(int w, int h) {
+    if (window_ == nullptr || w <= 0 || h <= 0) return;
+    glfwSetWindowSize(static_cast<GLFWwindow*>(window_), w, h);
+}
+
 void GlShell::NewFrame() {
     glfwPollEvents();
     ImGui_ImplOpenGL3_NewFrame();

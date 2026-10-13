@@ -28,7 +28,9 @@ class SpriteAtlas;
 // arrows), Execution spends (CP + interventions), Aftermath is
 // a marker strip (the report owns the screen, Epic 6).
 
-enum class HudDensity : std::uint8_t { Minimal, Standard, Full };
+// Widget verbosity — renamed off "HudDensity" (Story 13 settings
+// own that name: the UI scale knob in Game/Ui/SettingsForm.h).
+enum class HudVerbosity : std::uint8_t { Minimal, Standard, Full };
 
 enum class HudCell : std::uint8_t {
     CpPip,       // filled command point
@@ -55,7 +57,7 @@ struct HudWidget {
 struct HudLayout {
     int w = 0, h = 0;
     Gameplay::BattleBeat beat = Gameplay::BattleBeat::Planning;
-    HudDensity density = HudDensity::Standard;
+    HudVerbosity verbosity = HudVerbosity::Standard;
     std::vector<HudWidget> widgets;
     // Hit test for the shell's input layer.
     const HudWidget* Hit(int x, int y) const;
@@ -63,7 +65,7 @@ struct HudLayout {
 
 struct HudInput {
     Gameplay::BattleBeat beat = Gameplay::BattleBeat::Planning;
-    HudDensity density = HudDensity::Standard;
+    HudVerbosity verbosity = HudVerbosity::Standard;
     int w = 320, h = 240;
     // Execution surface
     int cp = 0;
