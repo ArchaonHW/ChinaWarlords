@@ -16,6 +16,7 @@
 - [IDE 架構設計](./architecture/MINGGORTS_IDE_ARCHITECTURE.md)
 - [IDE 開發計劃](./architecture/MINGGORTS_IDE_FULL_DEVELOPMENT_PLAN.md)
 - [Potato Engine 架構](./architecture/POTATO_ENGINE_ARCHITECTURE.md)
+- [遊戲主畫面 UI/UX 設計](./architecture/GAME_UI_UX_DESIGN.md) — 畫面流程規劃與 Epic 13 工項
 
 ### 報告與研究
 - [整合完成報告](./reports/CONSOLIDATED_COMPLETION_REPORT.md) — 全部開發歷程彙總

@@ -691,6 +691,17 @@ add_executable(potato_test_subversion Examples/potato_test_subversion.cpp)
 target_include_directories(potato_test_subversion PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(potato_test_subversion PotatoCampaign)
 add_test(NAME potato_test_subversion COMMAND potato_test_subversion)
+# Story 13.2 — screen-flow state machine (S0 title .. S4 ending)
+add_executable(potato_test_screenflow Examples/potato_test_screenflow.cpp)
+target_include_directories(potato_test_screenflow PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(potato_test_screenflow PotatoGame)
+add_test(NAME potato_test_screenflow COMMAND potato_test_screenflow)
+
+# Story 13.3 — S0 title screen (menu layout + save-slot scan)
+add_executable(potato_test_title Examples/potato_test_title.cpp)
+target_include_directories(potato_test_title PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(potato_test_title PotatoGame)
+add_test(NAME potato_test_title COMMAND potato_test_title)
 endif() # POTATO_TESTS
 
 if(POTATO_BUILD_GUI)

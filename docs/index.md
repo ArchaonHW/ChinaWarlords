@@ -25,6 +25,7 @@ docs/
 - **[MINGGORTS_IDE_ARCHITECTURE.md](./architecture/MINGGORTS_IDE_ARCHITECTURE.md)** — IDE 架構設計(核心架構、AI 整合層、專門化代理)
 - **[MINGGORTS_IDE_FULL_DEVELOPMENT_PLAN.md](./architecture/MINGGORTS_IDE_FULL_DEVELOPMENT_PLAN.md)** — IDE 完整開發計劃
 - **[POTATO_ENGINE_ARCHITECTURE.md](./architecture/POTATO_ENGINE_ARCHITECTURE.md)** — Potato Engine 獨立架構設計(原 PotatoEngine/ARCHITECTURE)
+- **[GAME_UI_UX_DESIGN.md](./architecture/GAME_UI_UX_DESIGN.md)** — 遊戲主畫面 UI/UX 設計規劃(完整畫面流程 S0–S4 + Epic 13 工項拆解)
 
 ## 📊 報告 (reports/)
 
