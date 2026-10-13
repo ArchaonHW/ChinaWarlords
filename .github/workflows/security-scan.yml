@@ -12,11 +12,11 @@ on:
 jobs:
   secret-scan:
     name: Secret Scanning
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Scan for secrets and credentials
       run: |
@@ -40,11 +40,11 @@ jobs:
 
   unsafe-api-scan:
     name: Unsafe API Scan (C/C++)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Scan for banned/unsafe functions
       run: |
@@ -75,7 +75,7 @@ jobs:
   report:
     name: Security Report
     needs: [secret-scan, unsafe-api-scan]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: always()
     steps:
     - name: Generate report
@@ -91,7 +91,7 @@ jobs:
         cat Reports/Security/scan.md
 
     - name: Upload report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: security-scan-results
         path: Reports/Security/

@@ -1,6 +1,7 @@
 #include "Game/Shell/GlShell.h"
 
 #include "Game/Render/Framebuffer.h"
+#include "Platform/SystemFonts.h"
 
 // THE GL SEAM — glfw/glad/imgui includes live only in Game/Shell.
 #include <glad/glad.h>
@@ -11,6 +12,7 @@
 #include <imgui_impl_opengl3.h>
 
 #include <cstdio>
+#include <string>
 
 namespace Potato::Game {
 
@@ -57,13 +59,8 @@ GLuint CompileShader(GLenum type, const char* src) {
 // document face, then the system traditional face (msjh), then the
 // broad-coverage fallbacks. Any load failure leaves the Latin atlas
 // intact — degraded, never fatal.
-const char* const kCjkFontPaths[] = {
-    "C:/Windows/Fonts/kaiu.ttf",     // DFKai-SB 標楷體 — 公文書風
-    "C:/Windows/Fonts/msjh.ttc",     // JhengHei 微軟正黑體
-    "C:/Windows/Fonts/mingliu.ttc",  // MingLiU 細明體
-    "C:/Windows/Fonts/msyh.ttc",     // YaHei (broad CJK coverage)
-    "C:/Windows/Fonts/simsun.ttc",   // SimSun
-};
+// Candidate list (Windows → Linux Noto CJK/fontconfig dirs → macOS) and
+// the POTATO_CJK_FONT override live in Platform/SystemFonts.h.
 
 // Compact BMP ranges: unified ideographs cover traditional AND
 // simplified; the punctuation/fullwidth rows carry 。，、「」『』
@@ -84,12 +81,15 @@ void LoadCjkFont() {
     ImFontConfig base;
     base.SizePixels = 16.0f;
     io.Fonts->AddFontDefault(&base);
-    for (const char* path : kCjkFontPaths) {
+    // FindCjkFont honours POTATO_CJK_FONT and only returns files that
+    // exist (ImGui asserts on unreadable font paths).
+    const std::string path = Potato::Platform::FindCjkFont();
+    if (!path.empty()) {
         ImFontConfig cfg;
         cfg.MergeMode = true;
-        if (io.Fonts->AddFontFromFileTTF(path, 16.0f, &cfg,
+        if (io.Fonts->AddFontFromFileTTF(path.c_str(), 16.0f, &cfg,
                                          kCjkRanges) != nullptr) {
-            std::fprintf(stderr, "ui: CJK font <- %s\n", path);
+            std::fprintf(stderr, "ui: CJK font <- %s\n", path.c_str());
             return;
         }
     }

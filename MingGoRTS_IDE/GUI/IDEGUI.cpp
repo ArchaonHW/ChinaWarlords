@@ -3,6 +3,7 @@
  */
 
 #include "IDEGUI.h"
+#include "../WorkspacePath.h"
 #include "../IntelligentSuggestion.h"
 #include "../../AI/IntelligentDevelopmentSystem.h"
 #include <iostream>
@@ -51,7 +52,8 @@ IDEGUI::IDEGUI()
     memset(state.developmentResponse, 0, sizeof(state.developmentResponse));
     
     // Set default path
-    state.currentPath = "C:\\HWC\\MingGoRTS";
+    // Default path; Initialize() overrides it with the core's workspace.
+    state.currentPath = MingGoRTSIDE::ResolveWorkspacePath();
     
     // Initialize Intelligent Development System
     g_LLMManager = new Potato::AI::LLMManager();
@@ -71,6 +73,9 @@ bool IDEGUI::Initialize(IDECore* ideCore) {
     std::cout << "Initializing MingGoRTS IDE GUI..." << std::endl;
     
     this->core = ideCore;
+    if (core && !core->GetConfig().workspacePath.empty()) {
+        state.currentPath = core->GetConfig().workspacePath;
+    }
     
     // Initialize I18N system
     if (!g_I18N) {
