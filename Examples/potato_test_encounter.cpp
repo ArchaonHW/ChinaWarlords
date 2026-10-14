@@ -7,6 +7,7 @@
 #include "Campaign/Characters/Character.h"
 #include "Campaign/Ledger/CrossCheck.h"
 #include "Campaign/Ledger/Ledger.h"
+#include "Campaign/Save/SaveSystem.h"
 #include "Campaign/State/CampaignState.h"
 #include "Campaign/World/Encounter.h"
 #include "Campaign/World/EncounterSettle.h"
@@ -54,6 +55,7 @@ using Potato::Campaign::Posting;
 using Potato::Campaign::PlayerDeploy;
 using Potato::Campaign::RecordRootTag;
 using Potato::Campaign::SettleEncounter;
+using Potato::Campaign::SaveSystem;
 using Potato::Campaign::WorldControl;
 using Potato::Campaign::WorldMap;
 using Potato::Campaign::WorldState;
@@ -518,6 +520,112 @@ int main() {
                   "warband stays put — continuation not reload");
             Check(PendingEncounters(ws, world, lib).empty(),
                   "defeated encounter leaves pending set");
+        }
+    }
+
+    // --- Story 14.3: selected encounter -> battle -> settlement -> save/load ---
+    {
+        CampaignState state;
+        WorldState ws = WorldState::Init(world, 17).value;
+        Check(ws.SetWarband("longmen", world),
+              "flow: warband reaches encounter node");
+        state.SetWorld(ws);
+        Check(Potato::Campaign::Enlist(state, "先鋒營").ok(),
+              "flow: campaign roster enlisted");
+
+        const auto pending = PendingEncounters(ws, world, lib);
+        const EncounterDef* selected = nullptr;
+        for (const EncounterDef* candidate : pending) {
+            if (candidate->id == "longmen_ambush") {
+                selected = candidate;
+                break;
+            }
+        }
+        Check(selected == &ambush,
+              "flow: arrival encounter selected from pending list");
+        const EncounterDef& chosen = selected != nullptr
+            ? *selected : ambush;
+
+        const std::vector<std::string> deck = {
+            "card_hold", "card_brace", "card_flee"};
+        const PlayerDeploy player{squads.Find("vanguard"), 0,
+                                  deck, "先鋒營"};
+        auto assembly = MarshalEncounter(
+            chosen, world, bmap, squads, cards, {&player, 1},
+            nullptr, 99);
+        Check(assembly.ok(), "flow: selection marshals deployment");
+
+        if (assembly.ok()) {
+            BattleController battle(assembly.value.seed, bmap, cards,
+                                    assembly.value.fog);
+            Potato::Gameplay::BattleRecorder recorder;
+            const JsonValue mapDoc = JsonValue::Parse(MAP_DOC).value;
+            const JsonValue cardsDoc = JsonValue::Parse(CARDS_DOC).value;
+            recorder.Bind(assembly.value.seed, mapDoc, cardsDoc);
+
+            const bool deployed =
+                Potato::Campaign::DeployAssembly(battle, assembly.value);
+            Check(deployed, "flow: deployment enters Planning");
+            if (deployed) {
+                for (std::size_t i = 0; i < assembly.value.rows.size(); ++i) {
+                    const auto& row = assembly.value.rows[i];
+                    recorder.RecordDeploy(*row.tmpl, row.region, row.side);
+                    recorder.RecordSheet(i, deck);
+                }
+                Check(battle.RequestBeat(BattleBeat::Execution),
+                      "flow: battle starts");
+                if (battle.Beat() == BattleBeat::Execution) {
+                    battle.Tick();
+                    if (battle.Beat() == BattleBeat::Execution) {
+                        battle.RequestBeat(BattleBeat::Aftermath);
+                    }
+                }
+                Check(battle.Beat() == BattleBeat::Aftermath,
+                      "flow: execution reaches Aftermath");
+                recorder.Seal(battle);
+                const auto record = recorder.ToJson();
+                const std::uint64_t root = record.ok()
+                    ? static_cast<std::uint64_t>(
+                          record.value["integrity"]["root"].AsInt())
+                    : 0;
+                Check(record.ok() && root != 0,
+                      "flow: completed battle has sealed record root");
+
+                const std::vector<AftermathRow> casualties = {
+                    {"先鋒營", 0, false}};
+                const auto settled = SettleEncounter(
+                    state, ws, world, chosen,
+                    battle.Outcome().winnerSide == 0, 0,
+                    battle.Events(), casualties, root);
+                Check(settled.ok(),
+                      "flow: battle outcome settles into campaign");
+                const auto remaining = PendingEncounters(ws, world, lib);
+                bool refires = false;
+                for (const EncounterDef* candidate : remaining) {
+                    if (candidate->id == "longmen_ambush") refires = true;
+                }
+                Check(ws.IsResolved("longmen_ambush") && !refires,
+                      "flow: settlement prevents encounter refire");
+
+                state.SetWorld(ws);
+                const fs::path saveDir = dir / "flow_saves";
+                SaveSystem saves(saveDir);
+                const auto saved = saves.Save(0, state);
+                const auto loaded = saved.ok() ? saves.Load(0)
+                    : Potato::Gameplay::Result<CampaignState>{};
+                Check(saved.ok() && loaded.ok(),
+                      "flow: campaign save reloads");
+                if (loaded.ok()) {
+                    Check(loaded.value.HasWorld() &&
+                              loaded.value.GetWorld().IsResolved(
+                                  "longmen_ambush") &&
+                              loaded.value.GetLedger().Size() ==
+                                  state.GetLedger().Size() &&
+                              loaded.value.GetRoster().size() == 1 &&
+                              loaded.value.GetRoster()[0].veterancy == 1,
+                          "flow: loaded world, ledger and roster agree");
+                }
+            }
         }
     }
 
