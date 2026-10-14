@@ -6,7 +6,8 @@
 # upstream-mirror workflow runs this and fails if the mirror drifts.
 #
 # Game-layer content (Gameplay/, Campaign/, Game/, MingGoRTS_IDE/,
-# _bmad-output/, assets/) never crosses — the mirror is engine-only.
+# Examples/MingGoRTS/, _bmad-output/, assets/) never crosses; the mirror
+# copies only engine examples from Examples/.
 
 set -euo pipefail
 
@@ -49,6 +50,10 @@ sync_dir() {
     rm -rf "${DEST:?}/$rel"
     mkdir -p "$DEST/$rel"
     cp -a "$SRC/$rel/." "$DEST/$rel/"
+    if [ "$rel" = "Examples" ]; then
+        # MingGoRTS-only tests stay in this repository, outside the engine mirror.
+        rm -rf "${DEST:?}/Examples/MingGoRTS"
+    fi
     if [ -n "$preserved_readme" ]; then
         cp "$preserved_readme" "$DEST/$rel/README.md"
         rm -f "$preserved_readme"
