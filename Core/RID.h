@@ -3,6 +3,11 @@
 /**
  * RID / RID_Alloc — Godot core/templates/rid.h + rid_owner.h 的移植。
  *
+ * 本檔含衍生自 Godot Engine 的程式碼（MIT License）：
+ *   Copyright (c) 2014-present Godot Engine contributors
+ *   Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur
+ * 完整授權條款見 repo 根目錄 THIRD_PARTY_NOTICES.md。
+ *
  * RID 是 64-bit 不透明資源句柄：低 32-bit 為 slot index、
  * 高 32-bit 為 validator（防呆代際號）。資源本體由 RID_Alloc
  * 的 slot 池持有——RID 失效（free 後重用）會被 validator
