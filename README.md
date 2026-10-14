@@ -116,7 +116,7 @@ cd build
 ctest -C Release --output-on-failure
 ```
 
-- CTest 共 42 個測試（Linux、2026-10-15 CI 驗證全綠）及 43 個測試
+- CTest 共 43 個測試（Linux、2026-10-15 CI 驗證全綠）及 44 個測試
   （Windows，另含 `gameplay_dep_guard`）：`potato_test_*` 單元測試、
   record/verify CLI e2e、引擎測試（RenderingServer、LLMToolBridge、Zeta 等）。
   測試數以 `ctest -N` 顯示為準；Windows CTest 會為每個測試隔離 TEMP/TMP，
@@ -161,4 +161,4 @@ clone 後不會出現；僅供持有該目錄的開發環境參考）：
 **MingGoRTS — 以筆代兵，以治為勝**
 
 *狀態：實作進行中 · 四層架構（Engine/Gameplay/Campaign/Game）已落地 ·
-43 項 CTest 已註冊（含 headless 玩法測試）· CI（syntax/security/build/ctest/mirror）運作中*
+44 項 CTest 已註冊（含 headless 玩法測試）· CI（syntax/security/build/ctest/mirror）運作中*
