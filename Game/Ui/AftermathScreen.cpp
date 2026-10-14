@@ -83,4 +83,20 @@ ReportPage BuildReportPage(std::string chronicle,
     return page;
 }
 
+bool PresentSettlementResult(
+    ScreenFlow& flow, ActionNotice& notice,
+    const Gameplay::Result<Campaign::EncounterSettlement>& result) {
+    if (flow.Screen() != ScreenId::Battle) {
+        const auto rejected = Gameplay::Fail<
+            Campaign::EncounterSettlement>(
+                "screen", "目前畫面不可結算戰役");
+        ShowActionResult(notice, rejected, "結算");
+        return false;
+    }
+
+    ShowActionResult(notice, result, "結算");
+    if (!result.ok()) return false;
+    return flow.Request(ScreenId::Settlement);
+}
+
 } // namespace Potato::Game

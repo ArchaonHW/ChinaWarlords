@@ -973,7 +973,8 @@ int main() {
                             battle->Outcome().elapsedTicks + 1),
                         &run->state.GetMyth(),
                         battle->Outcome().subverted);
-                    if (s.ok()) {
+                    if (Game::PresentSettlementResult(
+                            flow, actionNotice, s)) {
                         lastSettle = s.value;
                         haveSettle = true;
                         // 補鈔 — the codex hears the fold.
@@ -986,13 +987,8 @@ int main() {
                             bencaoLib, sig,
                             run->state.GetCodex());
                         run->state.GetCodex().TakePending(8);
-                    } else {
-                        lastSettle = {};
-                        haveSettle = true;
+                        settleReady = true;
                     }
-                    settleReady = true;
-                    flow.Request(
-                        Game::ScreenId::Settlement);
                 }
                 break;
             }
