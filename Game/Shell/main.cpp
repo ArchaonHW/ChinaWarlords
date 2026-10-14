@@ -501,8 +501,10 @@ int main() {
                                     (long long)march.Option()
                                         .supply);
                         if (ImGui::Button("確認")) {
-                            march.Confirm(ws, map,
-                                          run->state.GetLedger());
+                            const auto result = march.Confirm(
+                                ws, map, run->state.GetLedger());
+                            Game::ShowActionResult(
+                                actionNotice, result, "行軍令");
                         }
                         ImGui::SameLine();
                         if (ImGui::Button("作罷")) {
