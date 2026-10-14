@@ -25,6 +25,7 @@
 #include "Game/Ui/BattleSession.h"
 #include "Game/Ui/CreationForm.h"
 #include "Game/Ui/EndingScreen.h"
+#include "Game/Ui/EncounterLaunch.h"
 #include "Game/Ui/OverworldHud.h"
 #include "Game/Ui/PauseOverlay.h"
 #include "Game/Ui/ScreenFlow.h"
@@ -85,9 +86,9 @@ Game::SpriteAtlas LoadAtlas(const std::filesystem::path& dir) {
 // encounter field, keyed by doc id. std::map keeps the nodes
 // address-stable: BattleController borrows a const ref for the
 // battle's whole lifetime.
-std::map<std::string, Gameplay::BattleMap> LoadBattleMaps(
+Game::BattleMapCatalog LoadBattleMaps(
     const std::filesystem::path& dir) {
-    std::map<std::string, Gameplay::BattleMap> maps;
+    Game::BattleMapCatalog maps;
     if (!std::filesystem::exists(dir)) return maps;
     for (const auto& e :
          std::filesystem::directory_iterator(dir)) {
@@ -528,106 +529,106 @@ int main() {
                                 ("應戰##" + e.id).c_str())) {
                             const auto* ed =
                                 encs.Find(e.id);
-                            if (ed != nullptr) {
-                                auto bm =
-                                    battleMaps.find(
-                                        ed->map.empty()
-                                            ? "field"
-                                            : ed->map);
-                                if (bm != battleMaps.end()) {
-                                    Campaign::PlayerDeploy p0{
-                                        squads.Find("vanguard"),
-                                        0, run->deck, "先鋒營"};
-                                    Campaign::PlayerDeploy p1{
-                                        squads.Find("riders"),
-                                        3, run->deck, "輕騎隊"};
-                                    const Campaign::PlayerDeploy
-                                        pds[] = {p0, p1};
-                                    const Campaign::Character*
-                                        cmdr =
-                                            run->state
-                                                    .HasCharacter()
-                                                ? &run->state
-                                                       .GetCharacter()
-                                                : nullptr;
-                                    auto a =
-                                        Campaign::MarshalEncounter(
-                                            *ed, map, bm->second,
-                                            squads, cards, pds,
-                                            cmdr,
-                                            ws.Day() + 7);
-                                    if (a.ok()) {
-                                        asmb = std::move(a.value);
-                                        pendingEnc = ed;
-                                        battleMap = &bm->second;
-                                        battle =
-                                            std::make_unique<
-                                                Game::BattleSession>(
-                                                asmb.seed,
-                                                bm->second,
-                                                cards,
-                                                asmb.fog);
-                                        battle->Deploy(asmb);
-                                        // Symmetric opponent —
-                                        // the encounter's prior,
-                                        // canonical sim-time
-                                        // cadence (2 Hz).
-                                        const auto gp =
-                                            static_cast<
-                                                Gameplay::Prior>(
-                                                static_cast<int>(
-                                                    ed->hasPrior
-                                                        ? ed->prior
-                                                        : Campaign::
-                                                              RivalPrior::
-                                                                  Defensive));
-                                        foe = std::make_unique<
-                                            Gameplay::BattleAI>(
-                                            asmb.seed, 1, gp,
-                                            bm->second, cards);
-                                        battle->AttachOpponent(
-                                            foe.get(), 10);
-                                        // The encounter's own
-                                        // planning — arrows,
-                                        // Cunning's feints. The
-                                        // objective is the player
-                                        // warband's deploy region
-                                        // (marshal output, host-
-                                        // supplied — the AI never
-                                        // derives it from truth).
-                                        for (const auto& row :
-                                             asmb.rows) {
-                                            if (row.side == 0) {
-                                                foe->PlanDeployed(
-                                                    battle->
-                                                        Controller(),
-                                                    row.region);
-                                                break;
-                                            }
+                            if (ed == nullptr) {
+                                Game::ShowActionResult(
+                                    actionNotice,
+                                    Gameplay::Fail<bool>(
+                                        "encounter",
+                                        "遭遇已不在待應戰清單"),
+                                    "應戰");
+                            } else {
+                                Campaign::PlayerDeploy p0{
+                                    squads.Find("vanguard"),
+                                    0, run->deck, "先鋒營"};
+                                Campaign::PlayerDeploy p1{
+                                    squads.Find("riders"),
+                                    3, run->deck, "輕騎隊"};
+                                const Campaign::PlayerDeploy
+                                    pds[] = {p0, p1};
+                                const Campaign::Character* cmdr =
+                                    run->state.HasCharacter()
+                                        ? &run->state.GetCharacter()
+                                        : nullptr;
+                                auto launch =
+                                    Game::PrepareEncounterLaunch(
+                                        *ed, map, battleMaps, squads,
+                                        cards, pds, cmdr,
+                                        ws.Day() + 7);
+                                Game::ShowActionResult(
+                                    actionNotice, launch, "應戰");
+                                if (launch.ok()) {
+                                    asmb = std::move(launch.value);
+                                    pendingEnc = ed;
+                                    const auto bm =
+                                        battleMaps.find(asmb.mapId);
+                                    battleMap = &bm->second;
+                                    battle =
+                                        std::make_unique<
+                                            Game::BattleSession>(
+                                            asmb.seed,
+                                            *battleMap,
+                                            cards,
+                                            asmb.fog);
+                                    battle->Deploy(asmb);
+                                    // Symmetric opponent —
+                                    // the encounter's prior,
+                                    // canonical sim-time
+                                    // cadence (2 Hz).
+                                    const auto gp =
+                                        static_cast<
+                                            Gameplay::Prior>(
+                                            static_cast<int>(
+                                                ed->hasPrior
+                                                    ? ed->prior
+                                                    : Campaign::
+                                                          RivalPrior::
+                                                              Defensive));
+                                    foe = std::make_unique<
+                                        Gameplay::BattleAI>(
+                                        asmb.seed, 1, gp,
+                                        *battleMap, cards);
+                                    battle->AttachOpponent(
+                                        foe.get(), 10);
+                                    // The encounter's own
+                                    // planning — arrows,
+                                    // Cunning's feints. The
+                                    // objective is the player
+                                    // warband's deploy region
+                                    // (marshal output, host-
+                                    // supplied — the AI never
+                                    // derives it from truth).
+                                    for (const auto& row :
+                                         asmb.rows) {
+                                        if (row.side == 0) {
+                                            foe->PlanDeployed(
+                                                battle->
+                                                    Controller(),
+                                                row.region);
+                                            break;
                                         }
-                                        auto pr =
-                                            Game::MapProjection::
-                                                Build(
-                                                    bm->second,
-                                                    960, 600,
-                                                    8);
-                                        battleProj =
-                                            pr.ok()
-                                                ? std::optional{
-                                                      std::move(
-                                                          pr.value)}
-                                                : std::nullopt;
-                                        intent.Clear();
-                                        cmdError.clear();
-                                        confirmDeploy = false;
-                                        flow.Request(
-                                            Game::ScreenId::
-                                                Battle);
                                     }
+                                    auto pr =
+                                        Game::MapProjection::
+                                            Build(
+                                                *battleMap,
+                                                960, 600,
+                                                8);
+                                    battleProj =
+                                        pr.ok()
+                                            ? std::optional{
+                                                  std::move(
+                                                      pr.value)}
+                                            : std::nullopt;
+                                    intent.Clear();
+                                    cmdError.clear();
+                                    confirmDeploy = false;
+                                    flow.Request(
+                                        Game::ScreenId::
+                                            Battle);
+                                }
                                 }
                             }
                         }
-                    }
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("情報")) {
@@ -972,7 +973,8 @@ int main() {
                             battle->Outcome().elapsedTicks + 1),
                         &run->state.GetMyth(),
                         battle->Outcome().subverted);
-                    if (s.ok()) {
+                    if (Game::PresentSettlementResult(
+                            flow, actionNotice, s)) {
                         lastSettle = s.value;
                         haveSettle = true;
                         // 補鈔 — the codex hears the fold.
@@ -985,13 +987,8 @@ int main() {
                             bencaoLib, sig,
                             run->state.GetCodex());
                         run->state.GetCodex().TakePending(8);
-                    } else {
-                        lastSettle = {};
-                        haveSettle = true;
+                        settleReady = true;
                     }
-                    settleReady = true;
-                    flow.Request(
-                        Game::ScreenId::Settlement);
                 }
                 break;
             }
