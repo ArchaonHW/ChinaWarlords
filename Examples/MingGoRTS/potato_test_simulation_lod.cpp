@@ -1,4 +1,5 @@
 #include "Gameplay/Sim/SimulationLod.h"
+#include "Gameplay/Sim/SimulationLodKernels.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -151,6 +152,83 @@ int main() {
     Check(std::string_view(SimulationLodPolicy::Name(SimulationLod::Dormant)) ==
               "DORMANT",
           "LOD names are stable");
+
+    // REDUCED updates one representative state with bounded integer deltas.
+    // These reference values describe one 20-tick campaign interval.
+    {
+        const ReducedAgentState initial{800, 600, 450, 0};
+        const SimulationLodStep pressure{20, -40, -120, 75};
+        ReducedAgentState result{};
+        const bool advanced = AdvanceReduced(initial, pressure, result);
+        Check(advanced, "REDUCED accepts a valid interval update");
+        Check(result == ReducedAgentState{760, 480, 525, 20},
+              "REDUCED matches the explicit pressure reference");
+
+        ReducedAgentState replayed{};
+        const bool replayAdvanced =
+            AdvanceReduced(initial, pressure, replayed);
+        Check(replayAdvanced && replayed == result,
+              "REDUCED replay is deterministic");
+
+        const SimulationLodStep recovery{20, 25, 100, -50};
+        ReducedAgentState recovered{};
+        const bool recoveredOk = AdvanceReduced(result, recovery, recovered);
+        Check(recoveredOk &&
+                  recovered == ReducedAgentState{785, 580, 475, 40},
+              "REDUCED recovery reference accumulates elapsed ticks");
+
+        ReducedAgentState unchanged{1, 2, 3, 4};
+        const bool invalid = AdvanceReduced(
+            initial, SimulationLodStep{0, 0, 0, 0}, unchanged);
+        Check(!invalid && unchanged == ReducedAgentState{1, 2, 3, 4},
+              "REDUCED rejects invalid input without changing output");
+    }
+
+    // ABSTRACT removes two of ten members proportionally, then applies the
+    // survivors' interval changes. Totals are exact, with no float averages.
+    {
+        const AbstractCohortState initial{10, 8000, 6000, 4500, 0};
+        const AbstractLodStep pressure{20, 2, -20, -100, 50};
+        AbstractCohortState result{};
+        const bool advanced = AdvanceAbstract(initial, pressure, result);
+        Check(advanced, "ABSTRACT accepts a valid cohort update");
+        Check(result == AbstractCohortState{8, 6240, 4000, 4000, 20},
+              "ABSTRACT matches the proportional-loss reference");
+
+        AbstractCohortState replayed{};
+        const bool replayAdvanced =
+            AdvanceAbstract(initial, pressure, replayed);
+        Check(replayAdvanced && replayed == result,
+              "ABSTRACT replay is deterministic");
+
+        AbstractCohortState unchanged{3, 1500, 1200, 900, 7};
+        const bool invalid = AdvanceAbstract(
+            initial, AbstractLodStep{20, 11, 0, 0, 0}, unchanged);
+        Check(!invalid &&
+                  unchanged == AbstractCohortState{3, 1500, 1200, 900, 7},
+              "ABSTRACT rejects excessive losses transactionally");
+    }
+
+    // A one-member cohort provides a parity reference between both kernels.
+    {
+        const ReducedAgentState reducedInitial{350, 725, 900, 40};
+        const AbstractCohortState abstractInitial{1, 350, 725, 900, 40};
+        ReducedAgentState reducedResult{};
+        AbstractCohortState abstractResult{};
+        const bool reducedOk = AdvanceReduced(
+            reducedInitial, SimulationLodStep{60, 100, -125, -300},
+            reducedResult);
+        const bool abstractOk = AdvanceAbstract(
+            abstractInitial, AbstractLodStep{60, 0, 100, -125, -300},
+            abstractResult);
+        Check(reducedOk && abstractOk &&
+                  reducedResult == ReducedAgentState{
+                      static_cast<std::uint16_t>(abstractResult.strengthTotal),
+                      static_cast<std::uint16_t>(abstractResult.moraleTotal),
+                      static_cast<std::uint16_t>(abstractResult.supplyTotal),
+                      abstractResult.elapsedTicks},
+              "one-member ABSTRACT update matches REDUCED");
+    }
 
     std::printf("%s\n", failures == 0 ? "SIMULATION LOD PASS"
                                        : "SIMULATION LOD FAIL");
