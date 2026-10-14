@@ -27,6 +27,8 @@ docs/
 - **[POTATO_ENGINE_ARCHITECTURE.md](./architecture/POTATO_ENGINE_ARCHITECTURE.md)** — Potato Engine 獨立架構設計(原 PotatoEngine/ARCHITECTURE)
 - **[GAME_UI_UX_DESIGN.md](./architecture/GAME_UI_UX_DESIGN.md)** — 遊戲主畫面 UI/UX 設計規劃(完整畫面流程 S0–S4 + Epic 13 工項拆解)
 
+- **[SIMULATION_LOD.md](./architecture/SIMULATION_LOD.md)** — Deterministic hierarchical simulation LOD policy and implementation plan
+
 ## 📊 報告 (reports/)
 
 - **[CONSOLIDATED_COMPLETION_REPORT.md](./reports/CONSOLIDATED_COMPLETION_REPORT.md)** — 整合完成報告:涵蓋引擎核心、AI 平台、智能開發系統、IDE 全開發歷程(取代 12 份原始報告)
