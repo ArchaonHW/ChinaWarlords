@@ -20,6 +20,7 @@
 #include "Game/Render/ReportView.h"
 #include "Game/Render/SpriteAtlas.h"
 #include "Game/Ui/AftermathScreen.h"
+#include "Game/Ui/ActionNotice.h"
 #include "Game/Ui/BattleCommands.h"
 #include "Game/Ui/BattleSession.h"
 #include "Game/Ui/CreationForm.h"
@@ -252,6 +253,7 @@ int main() {
     bool drawerOpen = true;
 
     bool running = true;
+    Game::ActionNotice actionNotice;
     while (running && !shell.ShouldClose()) {
         shell.NewFrame();
 
@@ -272,6 +274,9 @@ int main() {
         }
         const float dtMs =
             ImGui::GetIO().DeltaTime * 1000.0f;
+        Game::AdvanceActionNotice(
+            actionNotice,
+            dtMs > 0.0f ? static_cast<std::uint32_t>(dtMs) : 0);
 
         // ---------- per-screen ----------
         switch (flow.Screen()) {
@@ -333,6 +338,7 @@ int main() {
                         run->state = std::move(s.value);
                         flow.Request(Game::ScreenId::Overworld);
                     }
+                    Game::ShowActionResult(actionNotice, s, "續玩");
                     break;
                 }
                 case Game::TitleAction::NewGame:
@@ -1160,7 +1166,11 @@ int main() {
                     flow.SetPaused(false);
                     break;
                 case Game::PauseAction::Save:
-                    if (run) saves.Save(0, run->state);
+                    if (run) {
+                        const auto saved = saves.Save(0, run->state);
+                        Game::ShowActionResult(actionNotice, saved,
+                                               "存檔");
+                    }
                     break;
                 case Game::PauseAction::LoadSlot: {
                     auto s = saves.Load(w.aux);
@@ -1172,6 +1182,7 @@ int main() {
                         flow.Request(
                             Game::ScreenId::Overworld);
                     }
+                    Game::ShowActionResult(actionNotice, s, "讀檔");
                     break;
                 }
                 case Game::PauseAction::Settings:
@@ -1229,10 +1240,14 @@ int main() {
                 Game::CycleDensity(draft, 1);
             ImGui::Separator();
             if (ImGui::Button("儲存")) {
-                settings = draft;
-                settings.Save("settings.json");
-                applySettings();
-                settingsOpen = false;
+                const auto saved = draft.Save("settings.json");
+                Game::ShowActionResult(actionNotice, saved,
+                                       "設定儲存");
+                if (saved.ok()) {
+                    settings = draft;
+                    applySettings();
+                    settingsOpen = false;
+                }
             }
             ImGui::SameLine();
             if (ImGui::Button("返回")) {
@@ -1277,6 +1292,21 @@ int main() {
             auto fb =
                 Game::RenderOverworld(map, ws, atlas, viewIn);
             if (fb.ok()) shell.Present(fb.value);
+        }
+        if (actionNotice.visible) {
+            ImGui::SetNextWindowPos({260, 36});
+            ImGui::SetNextWindowSize({440, 0});
+            ImGui::Begin("##action-notice", nullptr,
+                         ImGuiWindowFlags_NoDecoration |
+                             ImGuiWindowFlags_NoSavedSettings |
+                             ImGuiWindowFlags_AlwaysAutoResize);
+            const ImVec4 color = actionNotice.success
+                ? ImVec4{0.55f, 0.9f, 0.6f, 1.0f}
+                : ImVec4{1.0f, 0.45f, 0.4f, 1.0f};
+            ImGui::PushStyleColor(ImGuiCol_Text, color);
+            ImGui::TextWrapped("%s", actionNotice.text.c_str());
+            ImGui::PopStyleColor();
+            ImGui::End();
         }
         shell.Swap();
     }
