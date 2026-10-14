@@ -1,5 +1,5 @@
 <!-- bmad:context -->
-<!-- Verified 2026-09-29 (unversioned: git unavailable in this environment). Managed by bmad-project-context; edits inside this block are replaced on refresh. Keep anything you want preserved outside the markers. -->
+<!-- Verified 2026-09-29; status lines refreshed 2026-10-14. Managed by bmad-project-context; edits inside this block are replaced on refresh. Keep anything you want preserved outside the markers. -->
 
 ## MingGoRTS / PotatoEngine
 
@@ -9,7 +9,7 @@ C++20 game engine (PotatoEngine) + greenfield game layer (MingGoRTS). Planning a
 
 - Never push to `main`/`develop`; PRs only, Conventional Commits.
 - Never modify `external/` — vendored dependencies.
-- No third-party JSON libraries; use the game-layer `JsonValue` (to be built in `Gameplay/Json/`).
+- No third-party JSON libraries; use the game-layer `JsonValue` (`Gameplay/Json/`).
 - No unsafe C functions: `gets`, `strcpy`, `strcat`, `sprintf`, `vsprintf`, `scanf`.
 - All game content files are versioned JSON: `potato.<name>/<ver>` header, reject bad schema without mutating state.
 - Saves write via temp-file + rename (atomic).
@@ -17,7 +17,7 @@ C++20 game engine (PotatoEngine) + greenfield game layer (MingGoRTS). Planning a
 ## Where things are
 
 - Engine subsystems: top-level dirs (`Core/`, `ECS/`, `Events/`, `Rendering/`, `Serialization/`, `GUI/`, ...).
-- Game layer (planned, may not exist yet): `Gameplay/` sim → `Campaign/` → `Game/` shell → `assets/`.
+- Game layer (all four layers exist): `Gameplay/` sim → `Campaign/` → `Game/` shell → `assets/`.
 - Executable examples/tests: `Examples/` — each is its own `add_executable` target.
 - Story files and sprint tracking: `_bmad-output/implementation-artifacts/`.
 
@@ -25,8 +25,10 @@ C++20 game engine (PotatoEngine) + greenfield game layer (MingGoRTS). Planning a
 
 - Build (Windows/MSVC): `BuildEngine.bat`, or `cmake -B build -G "Visual Studio 17 2022" -A x64` then `cmake --build build --config Release`.
 - MinGW builds: guard toolchain specifics with `WIN32 AND NOT MSVC`; verify both MSVC and MinGW before calling work done.
-- No unified test command — there is no CTest; tests are standalone executables under `Examples/`. Game-layer tests use the `potato_test_<name>` convention (POTATO_TESTS option is planned, not yet in CMake).
-- Environment: `git`, `python`, `uv` are NOT on PATH here — don't script around them.
+- Build (Linux, g++): `sudo apt-get install cmake g++ libglfw3-dev libgl1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxkbcommon-dev`, then `cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j`. CI (`pre-commit-checks.yml`, ubuntu-24.04) does exactly this.
+- Tests: CTest, gated by the `POTATO_TESTS` option (default ON). `cd build && ctest --output-on-failure` (add `-C Release` on MSVC). 41 tests on Linux (verified 2026-10-14: `potato_test_*`, `potato_record_emit`/`potato_verify_cli`, engine tests like `RenderingServerTest`/`LLMToolBridgeTest`); Windows adds `gameplay_dep_guard` (42). Sources live in `Examples/`.
+- Machine-specific paths: none hard-coded. IDE workspace = `--workspace <dir>` → `MINGGORTS_WORKSPACE` → repo root found upward from the exe/cwd. CJK fonts come from `Platform/SystemFonts.h` (override with `POTATO_CJK_FONT` / `POTATO_CJK_FONT_BOLD`).
+- Environment (Windows dev box): `python`, `uv` may not be on PATH — don't script around them.
 
 ## Conventions that differ from defaults
 
@@ -42,7 +44,7 @@ C++20 game engine (PotatoEngine) + greenfield game layer (MingGoRTS). Planning a
 - README describes aspirational state (completed epics, existing `Gameplay/`, old planning paths) that does not match the filesystem — trust `_bmad-output/` documents and the actual tree, not README status lines.
 - PowerShell here-strings treat backticks as escapes — prefer `[IO.File]::WriteAllText` with single-quoted here-strings when writing content containing backticks.
 - The repo path contains CJK (`F:\民國史詩`) — MinGW make and FetchContent subbuilds fail on it ("Illegal byte sequence"). Build via an ASCII junction, e.g. `F:\dev\MingGoRTS -> F:\民國史詩\HWC\MingGoRTS` (older sessions may reference `C:\MingGoRTS`, a legacy alias of the same junction — prefer F: to keep workspace off the system drive).
-- `PotatoEngine` static lib does not compile under MinGW (`Security/SecuritySystem.cpp` uses MSVC-isms) — `PotatoGameplay` deliberately does not link it yet. For headless builds use `-DPOTATO_BUILD_GUI=OFF` (skips glfw/glad FetchContent, which also needs git/network).
+- `PotatoEngine` static lib builds with MSVC and Linux g++ but not MinGW (`Security/SecuritySystem.cpp` uses MSVC-isms) — `PotatoGameplay` deliberately does not link it yet. For headless builds use `-DPOTATO_BUILD_GUI=OFF` (skips glfw/glad FetchContent, which also needs git/network).
 
 <!-- /bmad:context -->
 
@@ -50,7 +52,7 @@ C++20 game engine (PotatoEngine) + greenfield game layer (MingGoRTS). Planning a
 
 - Toolchain installed via winget: CMake 4.4.4, Git 2.55.0, VS 2022 Build Tools (MSVC 19.44 + Windows SDK). Note: freshly spawned shells may need a PATH refresh (`[Environment]::GetEnvironmentVariable("Path","Machine")`) to see `cmake`/`git`.
 - Configure+build works with the default `POTATO_BUILD_GUI=ON` — FetchContent clones glfw 3.3.8 / glad v2.0.4 fine (ASCII path, git+network present).
-- Tests DO run under CTest: `ctest -C Release` in `build/` — 14/14 pass (potato_test_* + potato_record_emit/potato_verify_cli + gameplay_dep_guard). `gameplay_dep_guard` requires `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser` (now set).
+- Tests DO run under CTest: `ctest -C Release` in `build/` — (2026-10-12 count; now 41 on Linux / 42 on Windows) (potato_test_* + potato_record_emit/potato_verify_cli + gameplay_dep_guard). `gameplay_dep_guard` requires `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser` (now set).
 - All targets build clean under MSVC as of 2026-10-12 (legacy AI/Security/IDE modules were repaired: undeclared members, stale duplicate tail in AIAgentSystem.cpp, missing class declarations, unsafe-C calls replaced with `_s` variants).
 - VS installer requested a reboot to finish; builds work without it, but reboot once when convenient.
 

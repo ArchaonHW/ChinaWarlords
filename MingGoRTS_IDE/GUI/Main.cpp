@@ -6,6 +6,7 @@
 #include "IDEGUI.h"
 #include "../IDECore.h"
 #include "../AIIntegration.h"
+#include "../WorkspacePath.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -16,7 +17,7 @@ static void glfwErrorCallback(int error, const char* description) {
     std::cerr << "GLFW Error " << error << ": " << description << std::endl;
 }
 
-int main() {
+int main(int argc, char** argv) {
     std::cout << "=== MingGoRTS IDE GUI ===" << std::endl;
     std::cout << "AI-Powered Game Development Environment" << std::endl;
     std::cout << std::endl;
@@ -61,7 +62,8 @@ int main() {
     
     // Initialize IDE Core
     MingGoRTSIDE::IDEConfig config;
-    config.workspacePath = "C:\\HWC\\MingGoRTS";
+    // --workspace <dir> / MINGGORTS_WORKSPACE / exe-relative repo root
+    config.workspacePath = MingGoRTSIDE::ResolveWorkspacePath(argc, argv);
     config.projectName = "MingGoRTS Game Project";
     config.enableAIAssistance = true;
     config.enableMultiAgent = true;

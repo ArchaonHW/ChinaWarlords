@@ -332,7 +332,7 @@ private:
     void AddOutputLog(const std::string& message);
     void AddTerminalHistory(const std::string& command);
     void UpdateCursorPosition();
-    std::string GetCurrentTime();
+    std::string FormatCurrentTime();
     
     // Template System
     void InitializeTemplates();
