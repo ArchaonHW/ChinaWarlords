@@ -671,6 +671,8 @@ add_test(NAME potato_test_character COMMAND potato_test_character)
 # position -> three-beat battle -> world writeback + gated claims
 add_executable(potato_test_encounter Examples/potato_test_encounter.cpp)
 target_include_directories(potato_test_encounter PRIVATE ${CMAKE_SOURCE_DIR})
+target_compile_definitions(potato_test_encounter PRIVATE
+    POTATO_TEST_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_link_libraries(potato_test_encounter PotatoCampaign)
 add_test(NAME potato_test_encounter COMMAND potato_test_encounter)
 
