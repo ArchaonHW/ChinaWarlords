@@ -27,6 +27,22 @@
 
 namespace MingGoRTSIDE {
 
+inline std::string EnvironmentValue(const char* name) {
+#if defined(_MSC_VER)
+    char* value = nullptr;
+    std::size_t length = 0;
+    if (::_dupenv_s(&value, &length, name) != 0 || value == nullptr) {
+        return {};
+    }
+    std::string result(value);
+    std::free(value);
+    return result;
+#else
+    const char* value = std::getenv(name);
+    return value == nullptr ? std::string{} : std::string(value);
+#endif
+}
+
 inline std::filesystem::path ExecutableDir(const char* argv0) {
     namespace fs = std::filesystem;
     std::error_code ec;
@@ -70,9 +86,8 @@ inline std::string ResolveWorkspacePath(int argc = 0, char** argv = nullptr) {
             return argv[i] + 12;
         }
     }
-    if (const char* env = std::getenv("MINGGORTS_WORKSPACE")) {
-        if (*env != '\0') return env;
-    }
+    const std::string env = EnvironmentValue("MINGGORTS_WORKSPACE");
+    if (!env.empty()) return env;
     std::error_code ec;
     fs::path root = FindRepoRootFrom(
         ExecutableDir(argv != nullptr && argc > 0 ? argv[0] : nullptr));

@@ -59,6 +59,16 @@ public:
               const std::vector<std::string>& cardPool,
               std::size_t objective);
 
+    // Planning seam for hosts that deploy via marshaled rows
+    // (Campaign's DeployAssembly) rather than Plan(): everything
+    // Plan() does AFTER deployment — slot memory read from the
+    // already-set sheets, prior-shaped arrows toward `objective`,
+    // and Cunning's feints. `objective` is HOST-SUPPLIED (e.g.
+    // the player warband's region as the encounter authored it —
+    // the AI never derives one from enemy squad truth). Same
+    // beat gate; false (no mutation) when no own squad is fielded.
+    bool PlanDeployed(BattleController& bc, std::size_t objective);
+
     // --- Execution (call once between Tick()s) ---
     // Issues at most one intervention per squad per call, in
     // canonical squad-index order, through the Issue* gate — same
@@ -74,6 +84,12 @@ public:
 private:
     // One intervention attempt per squad, priority-ordered per prior.
     void ActOnSquad(BattleController& bc, std::size_t index);
+    // The Cunning plant — one confident false signature on a
+    // neighbor the arrow doesn't touch. Shared by Plan() (fresh
+    // deploy) and PlanDeployed() (marshaled rows).
+    void PlantFeint(BattleController& bc, int squadIndex,
+                    std::size_t region,
+                    const std::vector<std::size_t>& path);
 
     int side_ = 0;
     Prior prior_ = Prior::Aggressive;

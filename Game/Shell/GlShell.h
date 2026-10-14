@@ -27,6 +27,9 @@ public:
     void Shutdown();
 
     bool ShouldClose() const;
+    // Settings' resolution knob — resizes the WINDOW; the fb's
+    // logical size is untouched and the blit keeps scaling.
+    void ResizeWindow(int w, int h);
     // Poll events + begin the ImGui frame.
     void NewFrame();
     // Upload + blit the frame's RGBA8 bytes, nearest-filtered.

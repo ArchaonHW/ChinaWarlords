@@ -80,7 +80,7 @@ HudLayout BuildHudLayout(const HudInput& in) {
     lay.w = in.w;
     lay.h = in.h;
     lay.beat = in.beat;
-    lay.density = in.density;
+    lay.verbosity = in.verbosity;
 
     const int bar = in.h - 22; // bottom bar row
     switch (in.beat) {
@@ -94,7 +94,7 @@ HudLayout BuildHudLayout(const HudInput& in) {
                      i < in.cp ? kCpFill : kCpEmpty, true, 0});
             }
             // Regen sliver under the pips (0..CP_REGEN_TICKS).
-            if (in.density != HudDensity::Minimal) {
+            if (in.verbosity != HudVerbosity::Minimal) {
                 const int frac =
                     Gameplay::CP_REGEN_TICKS > 0
                         ? in.cpRegen * (in.cpCap * 12 - 4) /
@@ -147,7 +147,7 @@ HudLayout BuildHudLayout(const HudInput& in) {
                         {HudCell::CardTile, 8 + 0, y + 2,
                          14, 18, kCard, true,
                          static_cast<int>(sl)});
-                    if (in.density == HudDensity::Full) {
+                    if (in.verbosity == HudVerbosity::Full) {
                         // Cooldown meter under the card.
                         const int cd =
                             sheet.slots[sl].cooldownRemaining;
@@ -160,7 +160,7 @@ HudLayout BuildHudLayout(const HudInput& in) {
                 }
             }
             // Arrow rows at right edge (Standard+).
-            if (in.density != HudDensity::Minimal) {
+            if (in.verbosity != HudVerbosity::Minimal) {
                 int ay = 8;
                 for (std::size_t i = 0; i < in.arrows.size();
                      ++i) {

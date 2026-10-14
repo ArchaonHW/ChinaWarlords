@@ -188,23 +188,82 @@ bool BattleAI::Plan(BattleController& bc,
             path.resize(2);
         if (path.size() >= 2) bc.DrawArrow(side_, static_cast<int>(idx), path);
 
-        // Cunning feint: plant a confident false signature in the
-        // enemy's fog — believedRegion = a neighbor NOT on the arrow.
         if (prior_ == Prior::Cunning) {
-            for (std::size_t n : map_.Neighbors(region)) {
-                bool onPath = false;
-                for (std::size_t p : path)
-                    if (p == n) { onPath = true; break; }
-                if (!onPath) {
-                    bc.SetCloudIntel(enemySide,
-                                     static_cast<int>(idx),
-                                     static_cast<int>(n), 70);
-                    break;
-                }
-            }
+            PlantFeint(bc, static_cast<int>(idx), region, path);
         }
     }
     return true;
+}
+
+void BattleAI::PlantFeint(
+    BattleController& bc, int squadIndex, std::size_t region,
+    const std::vector<std::size_t>& path) {
+    // A confident false signature in the enemy's fog —
+    // believedRegion = a neighbor NOT on the arrow.
+    const int enemySide = side_ == 0 ? 1 : 0;
+    for (std::size_t n : map_.Neighbors(region)) {
+        bool onPath = false;
+        for (std::size_t p : path)
+            if (p == n) { onPath = true; break; }
+        if (!onPath) {
+            bc.SetCloudIntel(enemySide, squadIndex,
+                             static_cast<int>(n), 70);
+            return;
+        }
+    }
+}
+
+bool BattleAI::PlanDeployed(BattleController& bc,
+                            std::size_t objective) {
+    if (bc.Beat() != BattleBeat::Planning) return false;
+    if (side_ != 0 && side_ != 1) return false;
+    if (objective >= map_.RegionCount()) return false;
+    objective_ = objective;
+    probed_.assign(map_.RegionCount(), 0);
+    entangleTick_ = -1;
+
+    // Slot memory from the marshal-chosen sheets — Plan()'s
+    // scan runs against the pool it authored; here the sheets
+    // already exist, so the preference scan reads what was set.
+    overrideSlot_ = braceSlot_ = -1;
+    bool any = false;
+    for (std::size_t i = 0; i < bc.Squads().size(); ++i) {
+        const Squad& sq = bc.Squads()[i];
+        // Own-squad fields only — same discipline Act() keeps.
+        if (sq.side != side_ || !sq.IsEffective() ||
+            sq.regionIndex == Squad::NO_REGION)
+            continue;
+        any = true;
+        if (overrideSlot_ < 0 || braceSlot_ < 0) {
+            const SquadSheet& sheet = bc.SheetOf(i);
+            for (std::size_t s = 0; s < sheet.slots.size(); ++s) {
+                const DoctrineCard& c =
+                    cards_.At(sheet.slots[s].cardIndex);
+                if (overrideSlot_ < 0 &&
+                    (c.modifier == ModifierKind::AttackBoost ||
+                     c.action == ActionKind::Move))
+                    overrideSlot_ = static_cast<int>(s);
+                if (braceSlot_ < 0 &&
+                    c.action == ActionKind::Brace)
+                    braceSlot_ = static_cast<int>(s);
+            }
+        }
+
+        // Arrow: aggressive/cunning march the full BFS path;
+        // defensive takes only the first hop (cautious).
+        std::vector<std::size_t> path =
+            ShortestPath(map_, sq.regionIndex, objective);
+        if (prior_ == Prior::Defensive && path.size() > 2)
+            path.resize(2);
+        if (path.size() >= 2)
+            bc.DrawArrow(side_, static_cast<int>(i), path);
+
+        if (prior_ == Prior::Cunning) {
+            PlantFeint(bc, static_cast<int>(i), sq.regionIndex,
+                       path);
+        }
+    }
+    return any;
 }
 
 void BattleAI::Act(BattleController& bc) {

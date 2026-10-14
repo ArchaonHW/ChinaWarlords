@@ -13,7 +13,7 @@ set -euo pipefail
 DEST="${1:?usage: $0 <path-to-PotatoEngine-checkout>}"
 SRC="$(cd "$(dirname "$0")/.." && pwd)"
 
-if [ ! -d "$DEST/.git" ]; then
+if ! git -C "$DEST" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo "error: $DEST is not a git checkout" >&2
     exit 1
 fi
@@ -33,13 +33,26 @@ EXTS=(
 
 sync_dir() {
     local rel="$1"
+    local preserved_readme=""
     if [ ! -d "$SRC/$rel" ]; then
         echo "skip  $rel (not present in source)"
         return
     fi
+    # This repository has historically tracked this project-owned note in the
+    # mirror only. Preserve it when a source checkout (including CI) lacks it.
+    if [ "$rel" = "external/glad_gen" ] &&
+       [ ! -f "$SRC/$rel/README.md" ] &&
+       [ -f "$DEST/$rel/README.md" ]; then
+        preserved_readme="$(mktemp)"
+        cp "$DEST/$rel/README.md" "$preserved_readme"
+    fi
     rm -rf "${DEST:?}/$rel"
     mkdir -p "$DEST/$rel"
     cp -a "$SRC/$rel/." "$DEST/$rel/"
+    if [ -n "$preserved_readme" ]; then
+        cp "$preserved_readme" "$DEST/$rel/README.md"
+        rm -f "$preserved_readme"
+    fi
     echo "sync  $rel"
 }
 
