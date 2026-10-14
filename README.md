@@ -102,8 +102,11 @@ cd build
 ctest -C Release --output-on-failure
 ```
 
-- 31 個 CTest 測試全綠：`potato_test_*` 單元測試、record/verify CLI
-  e2e、`gameplay_dep_guard` 依賴方向守衛（Windows）
+- 42 個 CTest 測試已註冊：`potato_test_*` 單元測試、record/verify CLI
+  e2e、`gameplay_dep_guard` 依賴方向守衛（Windows）。測試數以
+  `ctest -N` 顯示為準；若 PowerShell 執行原則阻擋守衛，可用
+  `powershell -NoProfile -ExecutionPolicy Bypass -File scripts/CheckGameplayDeps.ps1`
+  單獨確認依賴方向。
 - `-DPOTATO_TESTS=OFF` 可略過全部測試 target 加速純庫建置
 - 玩法測試一律 headless——不得依賴 GL context
 
@@ -143,4 +146,4 @@ clone 後不會出現；僅供持有該目錄的開發環境參考）：
 **MingGoRTS — 以筆代兵，以治為勝**
 
 *狀態：實作進行中 · 四層架構（Engine/Gameplay/Campaign/Game）已落地 ·
-31 項 CTest headless 測試全綠 · CI（syntax/security/build/ctest/mirror）運作中*
+42 項 CTest 已註冊（含 headless 玩法測試）· CI（syntax/security/build/ctest/mirror）運作中*

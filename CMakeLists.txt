@@ -761,10 +761,27 @@ set_tests_properties(potato_verify_cli PROPERTIES DEPENDS potato_record_emit)
 if(WIN32)
     # Gameplay 層依賴方向守衛：禁 Rendering/GUI/Platform/GL 標頭
     add_test(NAME gameplay_dep_guard
-        COMMAND powershell -NoProfile -File ${CMAKE_SOURCE_DIR}/scripts/CheckGameplayDeps.ps1
+        # Scope the execution-policy override to this child process. The
+        # checked-in guard is a repository script; process scope avoids
+        # requiring a machine/user policy change on developer workstations.
+        COMMAND powershell -NoProfile -ExecutionPolicy Bypass
+            -File ${CMAKE_SOURCE_DIR}/scripts/CheckGameplayDeps.ps1
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
 endif() # POTATO_TESTS
+
+# File-backed tests use the OS temp directory. Point every CTest process at
+# its own build-local temp root so tests work in restricted workspaces and
+# can run in parallel without colliding on fixed fixture names.
+if(WIN32 AND POTATO_TESTS)
+    get_property(POTATO_CTEST_NAMES DIRECTORY PROPERTY TESTS)
+    foreach(test_name IN LISTS POTATO_CTEST_NAMES)
+        set(test_tmp_dir "${CMAKE_BINARY_DIR}/test-tmp/${test_name}")
+        file(MAKE_DIRECTORY "${test_tmp_dir}")
+        set_tests_properties(${test_name} PROPERTIES
+            ENVIRONMENT "TEMP=${test_tmp_dir};TMP=${test_tmp_dir}")
+    endforeach()
+endif()
 
 # 安裝 (暫時禁用)
 # install(TARGETS PotatoEngine SimpleExample PlatformTest
