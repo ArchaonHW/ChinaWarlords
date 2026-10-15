@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <utility>
 
 namespace Potato::Gameplay {
 
@@ -108,6 +109,81 @@ bool AdvanceAbstract(const AbstractCohortState& current,
             survivors, step.supplyDeltaPerSurvivor),
         current.elapsedTicks + step.elapsedTicks};
     next = result;
+    return true;
+}
+
+bool ProjectToAbstract(const SimulationRosterSnapshot& current,
+                       AbstractSimulationSnapshot& next) {
+    if (current.agents.size() >
+        std::numeric_limits<std::uint32_t>::max()) {
+        return false;
+    }
+
+    std::vector<SimulationAgentSnapshot> agents = current.agents;
+    std::sort(agents.begin(), agents.end(),
+              [](const SimulationAgentSnapshot& left,
+                 const SimulationAgentSnapshot& right) {
+                  return left.agentId < right.agentId;
+              });
+
+    AbstractSimulationSnapshot result;
+    result.agentIds.reserve(agents.size());
+    result.cohort.population = static_cast<std::uint32_t>(agents.size());
+    result.cohort.elapsedTicks = current.elapsedTicks;
+    for (std::size_t i = 0; i < agents.size(); ++i) {
+        const SimulationAgentSnapshot& agent = agents[i];
+        if (agent.strength > MEASURE_MAX || agent.morale > MEASURE_MAX ||
+            agent.supply > MEASURE_MAX ||
+            (i != 0 && agents[i - 1].agentId == agent.agentId)) {
+            return false;
+        }
+        result.agentIds.push_back(agent.agentId);
+        result.cohort.strengthTotal += agent.strength;
+        result.cohort.moraleTotal += agent.morale;
+        result.cohort.supplyTotal += agent.supply;
+    }
+    next = std::move(result);
+    return true;
+}
+
+bool RehydrateFromAbstract(const AbstractSimulationSnapshot& current,
+                           SimulationRosterSnapshot& next) {
+    const AbstractCohortState& cohort = current.cohort;
+    const std::uint32_t population = cohort.population;
+    if (current.agentIds.size() != population ||
+        !ValidTotal(cohort.strengthTotal, population) ||
+        !ValidTotal(cohort.moraleTotal, population) ||
+        !ValidTotal(cohort.supplyTotal, population)) {
+        return false;
+    }
+    for (std::size_t i = 1; i < current.agentIds.size(); ++i) {
+        if (current.agentIds[i - 1] >= current.agentIds[i]) return false;
+    }
+
+    SimulationRosterSnapshot result;
+    result.elapsedTicks = cohort.elapsedTicks;
+    result.agents.reserve(population);
+
+    const auto distribute = [population, ticks = cohort.elapsedTicks](
+                                std::uint64_t total, std::size_t index) {
+        if (population == 0) return std::uint16_t{0};
+        const std::uint64_t quotient = total / population;
+        const std::uint64_t remainder = total % population;
+        const std::uint64_t first = ticks % population;
+        const std::uint64_t rotated =
+            (static_cast<std::uint64_t>(index) + population - first) %
+            population;
+        return static_cast<std::uint16_t>(
+            quotient + (rotated < remainder ? 1 : 0));
+    };
+    for (std::size_t i = 0; i < current.agentIds.size(); ++i) {
+        result.agents.push_back(SimulationAgentSnapshot{
+            current.agentIds[i],
+            distribute(cohort.strengthTotal, i),
+            distribute(cohort.moraleTotal, i),
+            distribute(cohort.supplyTotal, i)});
+    }
+    next = std::move(result);
     return true;
 }
 
