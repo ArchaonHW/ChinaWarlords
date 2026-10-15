@@ -18,6 +18,10 @@
 - [Potato Engine 架構](./architecture/POTATO_ENGINE_ARCHITECTURE.md)
 - [遊戲主畫面 UI/UX 設計](./architecture/GAME_UI_UX_DESIGN.md) — 畫面流程規劃與 Epic 13 工項
 
+### 敘事
+- [《民國史詩》敘事聖經](./narrative/REPUBLICAN_EPIC_STORY_BIBLE.md) — 正史為主、神話為輔；含 24 章主線和黃花崗首個故事切片
+- [策略與治平治理框架](./narrative/STRATEGIC_GOVERNANCE_FRAMEWORK.md) — 兩篇新文章的玩法映射與驗收原則
+
 ### 報告與研究
 - [整合完成報告](./reports/CONSOLIDATED_COMPLETION_REPORT.md) — 全部開發歷程彙總
 - [安全稽核報告](./reports/SECURITY_AUDIT.md)
