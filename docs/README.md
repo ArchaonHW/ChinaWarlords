@@ -20,6 +20,7 @@
 
 ### 敘事
 - [《民國史詩》敘事聖經](./narrative/REPUBLICAN_EPIC_STORY_BIBLE.md) — 正史為主、神話為輔；含 24 章主線和黃花崗首個故事切片
+- [策略與治平治理框架](./narrative/STRATEGIC_GOVERNANCE_FRAMEWORK.md) — 兩篇新文章的玩法映射與驗收原則
 
 ### 報告與研究
 - [整合完成報告](./reports/CONSOLIDATED_COMPLETION_REPORT.md) — 全部開發歷程彙總

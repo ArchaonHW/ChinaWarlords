@@ -147,3 +147,8 @@
 - [國家人權記憶庫：白色恐怖案件](https://memory.nhrm.gov.tw/NormalNode/Detail/83?MenuNode=14) — 白色恐怖定義、受難對象與狹義／廣義時間範圍。
 - [國家人權記憶庫：戒嚴法](https://memory.nhrm.gov.tw/NormalNode/Detail/32?MenuNode=13) — 1949 年臺灣戒嚴及其對基本權利的影響。
 - [國史館臺灣文獻館：臺灣首次總統就職典禮](https://www.th.gov.tw/Epaper_Content/238/9126/) — 1996-03-23 首次總統全民直選。
+
+
+## 延伸理論：策略與治平治理
+
+兩篇新增文章的共同主張是：成熟的權力必須能採取行動，也能停止、受審查並修正；長期治理還要兼顧共同體自主、民主問責、民生保障與自願合作。完整的遊戲設計轉譯、既有 Campaign 系統對照與驗收檢查見[策略與治平治理框架](./STRATEGIC_GOVERNANCE_FRAMEWORK.md)。這些文章提供規範性設計觀點，不作為歷史資料或已驗證的數值公式。

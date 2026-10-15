@@ -31,6 +31,7 @@ docs/
 ## 📜 敘事 (narrative/)
 
 - **[REPUBLICAN_EPIC_STORY_BIBLE.md](./narrative/REPUBLICAN_EPIC_STORY_BIBLE.md)** — 民國史實主線與神話輔線整合規格、24 章編年及黃花崗首個切片
+- **[STRATEGIC_GOVERNANCE_FRAMEWORK.md](./narrative/STRATEGIC_GOVERNANCE_FRAMEWORK.md)** — 權力自制、三民主義與治平原則的玩法轉譯
 
 ## 📊 報告 (reports/)
 
