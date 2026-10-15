@@ -517,6 +517,11 @@ target_link_libraries(potato_test_squad PotatoGameplay)
 # TODO: POTATO_TESTS 清單為規劃項——目前以 CTest 直接註冊遊戲層測試
 enable_testing()
 add_test(NAME potato_test_gameplay COMMAND potato_test_gameplay)
+add_executable(potato_test_simulation_lod
+    Examples/MingGoRTS/potato_test_simulation_lod.cpp)
+target_include_directories(potato_test_simulation_lod PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(potato_test_simulation_lod PotatoGameplay)
+add_test(NAME potato_test_simulation_lod COMMAND potato_test_simulation_lod)
 add_test(NAME potato_test_json COMMAND potato_test_json)
 add_test(NAME potato_test_map COMMAND potato_test_map)
 add_test(NAME potato_test_squad COMMAND potato_test_squad)
