@@ -58,6 +58,7 @@ option(POTATO_BUILD_GUI "Build windowed GL executables and allow glfw FetchConte
 
 # potato_test_* / CTest 註冊——關閉可加速純庫建置（CI 預設 ON 並跑 ctest）
 option(POTATO_TESTS "Build potato_test_* targets and register them with CTest" ON)
+option(POTATO_BENCHMARKS "Build opt-in performance measurement tools" OFF)
 
 # glfw/glad 皆為 C 源碼——頂層 project() 僅啟用 CXX，此處按需啟用
 enable_language(C)
@@ -389,6 +390,13 @@ target_include_directories(LLMToolBridgeTest PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(LLMToolBridgeTest LLMToolBridge ZetaAgentTools ToolFramework LLMIntegration)
 add_test(NAME LLMToolBridgeTest COMMAND LLMToolBridgeTest)
 endif() # POTATO_TESTS
+
+if(POTATO_BENCHMARKS)
+    add_executable(potato_benchmark_simulation_lod
+        Examples/MingGoRTS/potato_benchmark_simulation_lod.cpp)
+    target_include_directories(potato_benchmark_simulation_lod PRIVATE ${CMAKE_SOURCE_DIR})
+    target_link_libraries(potato_benchmark_simulation_lod PotatoGameplay)
+endif()
 
 # MingGoRTS IDE 智能建議系統
 add_library(IntelligentSuggestion STATIC MingGoRTS_IDE/IntelligentSuggestion.cpp)

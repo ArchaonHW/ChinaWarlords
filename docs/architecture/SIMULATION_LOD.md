@@ -129,11 +129,17 @@ FULL/REDUCED/ABSTRACT/AGGREGATE/DORMANT scheduler are still not connected.
 
 ## Scope boundary and next work
 
-2. Add measured per-backend compute budgets. Keep CPU as the deterministic
-   reference; only add GPU/NPU paths after parity and replay behavior are
-   specified.
-3. Connect snapshots to live world ticks only after the scheduler and
-   public-versus-hidden state boundaries are tested end to end.
+The opt-in `potato_benchmark_simulation_lod` executable measures the CPU
+reference planner at 100, 1,000, 10,000, and 100,000 subjects. It reports the
+median of seven independent planning runs and a deterministic output checksum.
+Configure with `-DPOTATO_BENCHMARKS=ON`, then build and run that target. The
+elapsed time is host-dependent measurement data; it is not used to assign LODs
+or change replay behavior. Record results alongside the CPU and build
+configuration before selecting a CPU compute budget. Only add GPU/NPU paths
+after parity and replay behavior are specified.
+
+Next, connect snapshots to live world ticks only after the scheduler and
+public-versus-hidden state boundaries are tested end to end.
 
 The unit test also plans the specification's mixed scale of 100 FULL and
 100,000 ABSTRACT entities. This verifies classification and allocation
