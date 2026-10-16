@@ -23,6 +23,7 @@ docs/
 
 ## 🏗️ 架構 (architecture/)
 
+- **[TECHNICAL_BASELINE.md](./architecture/TECHNICAL_BASELINE.md)** — 依目前原始碼整理的技術基線，區分已實作能力與規劃項目
 - **[MINGGORTS_IDE_ARCHITECTURE.md](./architecture/MINGGORTS_IDE_ARCHITECTURE.md)** — IDE 架構設計(核心架構、AI 整合層、專門化代理)
 - **[MINGGORTS_IDE_FULL_DEVELOPMENT_PLAN.md](./architecture/MINGGORTS_IDE_FULL_DEVELOPMENT_PLAN.md)** — IDE 完整開發計劃
 - **[POTATO_ENGINE_ARCHITECTURE.md](./architecture/POTATO_ENGINE_ARCHITECTURE.md)** — Potato Engine 獨立架構設計(原 PotatoEngine/ARCHITECTURE)
