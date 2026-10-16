@@ -20,10 +20,12 @@
 #include "Game/Render/ReportView.h"
 #include "Game/Render/SpriteAtlas.h"
 #include "Game/Ui/AftermathScreen.h"
+#include "Game/Ui/ActionNotice.h"
 #include "Game/Ui/BattleCommands.h"
 #include "Game/Ui/BattleSession.h"
 #include "Game/Ui/CreationForm.h"
 #include "Game/Ui/EndingScreen.h"
+#include "Game/Ui/EncounterLaunch.h"
 #include "Game/Ui/OverworldHud.h"
 #include "Game/Ui/PauseOverlay.h"
 #include "Game/Ui/ScreenFlow.h"
@@ -84,9 +86,9 @@ Game::SpriteAtlas LoadAtlas(const std::filesystem::path& dir) {
 // encounter field, keyed by doc id. std::map keeps the nodes
 // address-stable: BattleController borrows a const ref for the
 // battle's whole lifetime.
-std::map<std::string, Gameplay::BattleMap> LoadBattleMaps(
+Game::BattleMapCatalog LoadBattleMaps(
     const std::filesystem::path& dir) {
-    std::map<std::string, Gameplay::BattleMap> maps;
+    Game::BattleMapCatalog maps;
     if (!std::filesystem::exists(dir)) return maps;
     for (const auto& e :
          std::filesystem::directory_iterator(dir)) {
@@ -252,6 +254,7 @@ int main() {
     bool drawerOpen = true;
 
     bool running = true;
+    Game::ActionNotice actionNotice;
     while (running && !shell.ShouldClose()) {
         shell.NewFrame();
 
@@ -272,6 +275,9 @@ int main() {
         }
         const float dtMs =
             ImGui::GetIO().DeltaTime * 1000.0f;
+        Game::AdvanceActionNotice(
+            actionNotice,
+            dtMs > 0.0f ? static_cast<std::uint32_t>(dtMs) : 0);
 
         // ---------- per-screen ----------
         switch (flow.Screen()) {
@@ -333,6 +339,7 @@ int main() {
                         run->state = std::move(s.value);
                         flow.Request(Game::ScreenId::Overworld);
                     }
+                    Game::ShowActionResult(actionNotice, s, "續玩");
                     break;
                 }
                 case Game::TitleAction::NewGame:
@@ -495,8 +502,10 @@ int main() {
                                     (long long)march.Option()
                                         .supply);
                         if (ImGui::Button("確認")) {
-                            march.Confirm(ws, map,
-                                          run->state.GetLedger());
+                            const auto result = march.Confirm(
+                                ws, map, run->state.GetLedger());
+                            Game::ShowActionResult(
+                                actionNotice, result, "行軍令");
                         }
                         ImGui::SameLine();
                         if (ImGui::Button("作罷")) {
@@ -520,106 +529,29 @@ int main() {
                                 ("應戰##" + e.id).c_str())) {
                             const auto* ed =
                                 encs.Find(e.id);
-                            if (ed != nullptr) {
-                                auto bm =
-                                    battleMaps.find(
-                                        ed->map.empty()
-                                            ? "field"
-                                            : ed->map);
-                                if (bm != battleMaps.end()) {
-                                    Campaign::PlayerDeploy p0{
-                                        squads.Find("vanguard"),
-                                        0, run->deck, "先鋒營"};
-                                    Campaign::PlayerDeploy p1{
-                                        squads.Find("riders"),
-                                        3, run->deck, "輕騎隊"};
-                                    const Campaign::PlayerDeploy
-                                        pds[] = {p0, p1};
-                                    const Campaign::Character*
-                                        cmdr =
-                                            run->state
-                                                    .HasCharacter()
-                                                ? &run->state
-                                                       .GetCharacter()
-                                                : nullptr;
-                                    auto a =
-                                        Campaign::MarshalEncounter(
-                                            *ed, map, bm->second,
-                                            squads, cards, pds,
-                                            cmdr,
-                                            ws.Day() + 7);
-                                    if (a.ok()) {
-                                        asmb = std::move(a.value);
-                                        pendingEnc = ed;
-                                        battleMap = &bm->second;
-                                        battle =
-                                            std::make_unique<
-                                                Game::BattleSession>(
-                                                asmb.seed,
-                                                bm->second,
-                                                cards,
-                                                asmb.fog);
-                                        battle->Deploy(asmb);
-                                        // Symmetric opponent —
-                                        // the encounter's prior,
-                                        // canonical sim-time
-                                        // cadence (2 Hz).
-                                        const auto gp =
-                                            static_cast<
-                                                Gameplay::Prior>(
-                                                static_cast<int>(
-                                                    ed->hasPrior
-                                                        ? ed->prior
-                                                        : Campaign::
-                                                              RivalPrior::
-                                                                  Defensive));
-                                        foe = std::make_unique<
-                                            Gameplay::BattleAI>(
-                                            asmb.seed, 1, gp,
-                                            bm->second, cards);
-                                        battle->AttachOpponent(
-                                            foe.get(), 10);
-                                        // The encounter's own
-                                        // planning — arrows,
-                                        // Cunning's feints. The
-                                        // objective is the player
-                                        // warband's deploy region
-                                        // (marshal output, host-
-                                        // supplied — the AI never
-                                        // derives it from truth).
-                                        for (const auto& row :
-                                             asmb.rows) {
-                                            if (row.side == 0) {
-                                                foe->PlanDeployed(
-                                                    battle->
-                                                        Controller(),
-                                                    row.region);
-                                                break;
-                                            }
-                                        }
-                                        auto pr =
-                                            Game::MapProjection::
-                                                Build(
-                                                    bm->second,
-                                                    960, 600,
-                                                    8);
-                                        battleProj =
-                                            pr.ok()
-                                                ? std::optional{
-                                                      std::move(
-                                                          pr.value)}
-                                                : std::nullopt;
-                                        intent.Clear();
-                                        cmdError.clear();
-                                        confirmDeploy = false;
-                                        flow.Request(
-                                            Game::ScreenId::
-                                                Battle);
                                     }
+                                    auto pr =
+                                        Game::MapProjection::
+                                            Build(
+                                                *battleMap,
+                                                960, 600,
+                                                8);
+                                    battleProj =
+                                        pr.ok()
+                                            ? std::optional{
+                                                  std::move(
+                                                      pr.value)}
+                                            : std::nullopt;
+                                    intent.Clear();
+                                    cmdError.clear();
+                                    confirmDeploy = false;
+                                    flow.Request(
+                                        Game::ScreenId::
+                                            Battle);
+                                }
                                 }
                             }
                         }
-                    }
                     ImGui::EndTabItem();
                 }
                 if (ImGui::BeginTabItem("情報")) {
@@ -964,7 +896,8 @@ int main() {
                             battle->Outcome().elapsedTicks + 1),
                         &run->state.GetMyth(),
                         battle->Outcome().subverted);
-                    if (s.ok()) {
+                    if (Game::PresentSettlementResult(
+                            flow, actionNotice, s)) {
                         lastSettle = s.value;
                         haveSettle = true;
                         // 補鈔 — the codex hears the fold.
@@ -977,13 +910,8 @@ int main() {
                             bencaoLib, sig,
                             run->state.GetCodex());
                         run->state.GetCodex().TakePending(8);
-                    } else {
-                        lastSettle = {};
-                        haveSettle = true;
+                        settleReady = true;
                     }
-                    settleReady = true;
-                    flow.Request(
-                        Game::ScreenId::Settlement);
                 }
                 break;
             }
@@ -1160,7 +1088,11 @@ int main() {
                     flow.SetPaused(false);
                     break;
                 case Game::PauseAction::Save:
-                    if (run) saves.Save(0, run->state);
+                    if (run) {
+                        const auto saved = saves.Save(0, run->state);
+                        Game::ShowActionResult(actionNotice, saved,
+                                               "存檔");
+                    }
                     break;
                 case Game::PauseAction::LoadSlot: {
                     auto s = saves.Load(w.aux);
@@ -1172,6 +1104,7 @@ int main() {
                         flow.Request(
                             Game::ScreenId::Overworld);
                     }
+                    Game::ShowActionResult(actionNotice, s, "讀檔");
                     break;
                 }
                 case Game::PauseAction::Settings:
@@ -1229,10 +1162,6 @@ int main() {
                 Game::CycleDensity(draft, 1);
             ImGui::Separator();
             if (ImGui::Button("儲存")) {
-                settings = draft;
-                settings.Save("settings.json");
-                applySettings();
-                settingsOpen = false;
             }
             ImGui::SameLine();
             if (ImGui::Button("返回")) {
@@ -1277,6 +1206,21 @@ int main() {
             auto fb =
                 Game::RenderOverworld(map, ws, atlas, viewIn);
             if (fb.ok()) shell.Present(fb.value);
+        }
+        if (actionNotice.visible) {
+            ImGui::SetNextWindowPos({260, 36});
+            ImGui::SetNextWindowSize({440, 0});
+            ImGui::Begin("##action-notice", nullptr,
+                         ImGuiWindowFlags_NoDecoration |
+                             ImGuiWindowFlags_NoSavedSettings |
+                             ImGuiWindowFlags_AlwaysAutoResize);
+            const ImVec4 color = actionNotice.success
+                ? ImVec4{0.55f, 0.9f, 0.6f, 1.0f}
+                : ImVec4{1.0f, 0.45f, 0.4f, 1.0f};
+            ImGui::PushStyleColor(ImGuiCol_Text, color);
+            ImGui::TextWrapped("%s", actionNotice.text.c_str());
+            ImGui::PopStyleColor();
+            ImGui::End();
         }
         shell.Swap();
     }

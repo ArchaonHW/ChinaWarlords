@@ -530,7 +530,7 @@ void IDEGUI::RenderStatusBar() {
     ImGui::SameLine();
     
     // Time
-    ImGui::Text("%s", GetCurrentTime().c_str());
+    ImGui::Text("%s", FormatCurrentTime().c_str());
     
     ImGui::End();
 }
@@ -1427,7 +1427,7 @@ void IDEGUI::UpdateCursorPosition() {
     }
 }
 
-std::string IDEGUI::GetCurrentTime() {
+std::string IDEGUI::FormatCurrentTime() {
     auto now = std::time(nullptr);
     std::tm tm{};
     localtime_s(&tm, &now);

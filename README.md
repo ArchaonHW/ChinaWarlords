@@ -91,8 +91,8 @@ cmake -B build -S . -DPOTATO_BUILD_GUI=OFF
 cmake --build build --config Release
 ```
 
-> 注意：`PotatoEngine` 靜態庫可用 MSVC 與 Linux g++ 建置，但 MinGW 不行
->（`Security/` 使用 MSVC 專用寫法）；`PotatoGameplay` 刻意不連結引擎靜態庫，headless 遊戲層可在
+> 注意：`PotatoEngine` 靜態庫目前僅 MSVC 可編（`Security/` 使用 MSVC 專用
+> 寫法）；`PotatoGameplay` 刻意不連結引擎靜態庫，headless 遊戲層可在
 > MinGW 下建置。MinGW 專用連結以 `if(WIN32 AND NOT MSVC)` 守衛。
 
 ### Linux（Ubuntu 24.04 驗證）
@@ -116,9 +116,11 @@ cd build
 ctest -C Release --output-on-failure
 ```
 
-- CTest 共 41 個測試（Linux，2026-10-14 驗證全綠；Windows 另加
-  `gameplay_dep_guard` 依賴方向守衛共 42 個）：`potato_test_*` 單元測試、
-  record/verify CLI e2e、引擎測試（RenderingServer、LLMToolBridge、Zeta 等）
+- CTest 共 43 個測試（Linux、2026-10-15 CI 驗證全綠）及 44 個測試
+  （Windows，另含 `gameplay_dep_guard`）：`potato_test_*` 單元測試、
+  record/verify CLI e2e、引擎測試（RenderingServer、LLMToolBridge、Zeta 等）。
+  測試數以 `ctest -N` 顯示為準；Windows CTest 會為每個測試隔離 TEMP/TMP，
+  並以程序限定的 PowerShell execution-policy override 執行依賴守衛。
 - CI（`pre-commit-checks.yml`，ubuntu-24.04）每次 push／PR 皆建置並跑 ctest
 - `-DPOTATO_TESTS=OFF` 可略過全部測試 target 加速純庫建置
 - 玩法測試一律 headless——不得依賴 GL context
@@ -144,6 +146,7 @@ ctest -C Release --output-on-failure
 ## 文件索引
 
 - [docs/](docs/index.md)——引擎指南、架構、研究報告
+- [技術基線](docs/architecture/TECHNICAL_BASELINE.md)——目前已驗證的技術與依賴邊界；舊版引擎概覽中的方向性方案不代表已採用
 
 以下規劃產物為**本地開發文件**（`_bmad-output/` 刻意不進版控，
 clone 後不會出現；僅供持有該目錄的開發環境參考）：
@@ -159,4 +162,4 @@ clone 後不會出現；僅供持有該目錄的開發環境參考）：
 **MingGoRTS — 以筆代兵，以治為勝**
 
 *狀態：實作進行中 · 四層架構（Engine/Gameplay/Campaign/Game）已落地 ·
-31 項 CTest headless 測試全綠 · CI（syntax/security/build/ctest/mirror）運作中*
+44 項 CTest 已註冊（含 headless 玩法測試）· CI（syntax/security/build/ctest/mirror）運作中*

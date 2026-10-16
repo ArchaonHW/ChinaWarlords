@@ -3,6 +3,7 @@
 #include "Campaign/World/WorldMap.h"
 #include "Campaign/Quantum/QuantumOracle.h" // 13.6 decision seam
 #include "Gameplay/Result.h"
+#include "Gameplay/Sim/SimulationLod.h"
 #include "Gameplay/Sim/Sim.h" // Prng — the dedicated world stream
 
 #include <cstddef>
@@ -10,6 +11,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -29,15 +31,16 @@ namespace Potato::Campaign {
 // integer-only, and draws from a dedicated SplitMix64 stream that
 // is NOT the battle's PRNG. Zero file I/O, no exceptions.
 //
-// Persisted as sibling doc `potato.worldstate/1` (MythState
-// potato.myth/1 precedent) — embedding into the campaign save
-// envelope is Story 12.8's seam.
+// Persisted as versioned doc `potato.worldstate/1` (MythState
+// potato.myth/1 precedent), normally embedded in the campaign
+// save envelope. It can also be serialized on its own.
 //
 // Wire shape:
 //   {"schema":"potato.worldstate/1","world":"republic_fall",
 //    "day":4,"warband":"kaifeng",
 //    "control":{"kaifeng":"player","luoyang":"rival"},
 //    "resolved":["longmen_shrine"],"rng":12345,
+//    "agents":[{"id":7,"public_node":"kaifeng","lod":{...}}],
 //    "queue":[{"day":6,"seq":0,"kind":"control",
 //              "node":"luoyang","control":"neutral"}]}
 //
@@ -69,11 +72,25 @@ struct SightingMark {
     std::int64_t count = 0;
 };
 
+// Campaign-visible agent projection used by strategic simulation LOD.
+// `publicNode` is the location known to the campaign layer, not a source
+// of hidden enemy position. Importance factors are likewise caller-owned
+// observations or public strategic data; this record stores no battle truth.
+struct WorldAgentState {
+    std::uint64_t id = 0; // stable within this world's campaign save
+    std::string publicNode;
+    Gameplay::SimulationLodFactors lodFactors;
+
+    friend bool operator==(const WorldAgentState&,
+                           const WorldAgentState&) = default;
+};
+
 class WorldState {
 public:
     static constexpr std::string_view SCHEMA = "potato.worldstate/1";
     static constexpr std::size_t MAX_EVENTS = 1024;   // queued
     static constexpr std::size_t MAX_RESOLVED = 4096;
+    static constexpr std::size_t MAX_AGENTS = 100000;
     static constexpr std::size_t MAX_ID_LEN = 64;
     static constexpr std::int64_t MAX_DAY = 36500;    // ~100 yrs
 
@@ -185,6 +202,17 @@ public:
         return sightings_;
     }
 
+    // Persistent campaign agents are canonicalized by stable ID. The
+    // replacement is all-or-nothing and accepts only public map nodes.
+    Gameplay::Result<bool> SetAgents(
+        const WorldMap& map, std::span<const WorldAgentState> agents);
+    const std::vector<WorldAgentState>& Agents() const { return agents_; }
+    // Pure projection into the Gameplay policy. Assignments are derived,
+    // sorted by stable ID, and intentionally not persisted.
+    Gameplay::Result<std::vector<Gameplay::SimulationLodAssignment>>
+    PlanAgentLod(const Gameplay::SimulationLodPolicy& policy,
+                 const Gameplay::SimulationBudget& budget) const;
+
     Gameplay::Result<Gameplay::JsonValue> ToJson() const;
     static Gameplay::Result<WorldState> FromJson(
         const Gameplay::JsonValue& doc);
@@ -201,6 +229,7 @@ private:
     std::string marchingTo_;                      // in-flight dest
     std::int64_t marchEta_ = 0;                   // arrival day
     std::map<std::string, SightingMark> sightings_;
+    std::vector<WorldAgentState> agents_; // sorted by stable id
     std::optional<QuantumOracle> oracle_;   // 13.6 — second stream
     std::uint64_t oracleSeed_ = 0;          // persisted for resume
 };

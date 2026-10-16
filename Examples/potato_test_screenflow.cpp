@@ -3,11 +3,14 @@
 // pause overlay flag, and the save gating that keeps I/O off the
 // tick path.
 #include "Game/Ui/EndingScreen.h"
+#include "Game/Ui/ActionNotice.h"
+#include "Game/Ui/AftermathScreen.h"
 #include "Game/Ui/ScreenFlow.h"
 #include "Game/Ui/PauseOverlay.h"
 #include "Game/Ui/SettingsForm.h"
 #include "Game/Ui/TitleScreen.h"
 #include "Campaign/Ledger/Ledger.h"
+#include "Campaign/World/EncounterSettle.h"
 
 #include <cstdio>
 #include <filesystem>
@@ -33,6 +36,63 @@ constexpr ScreenId kAll[] = {
 } // namespace
 
 int main() {
+    // ===== Settlement failures keep the report open =====
+    {
+        ScreenFlow flow;
+        flow.Request(ScreenId::Overworld);
+        flow.Request(ScreenId::Battle);
+        Potato::Game::ActionNotice notice;
+        const auto rejected = Potato::Gameplay::Fail<
+            Potato::Campaign::EncounterSettlement>(
+                "posting", "ledger lacks capacity");
+        const bool advanced = Potato::Game::PresentSettlementResult(
+            flow, notice, rejected);
+        Check(!advanced && flow.Screen() == ScreenId::Battle &&
+                  notice.visible && !notice.success &&
+                  notice.text.find("結算失敗") == 0 &&
+                  notice.text.find("ledger lacks capacity") !=
+                      std::string::npos,
+              "failed settlement explains rejection and keeps report open");
+
+        const auto committed = Potato::Gameplay::Ok(
+            Potato::Campaign::EncounterSettlement{});
+        const bool settled = Potato::Game::PresentSettlementResult(
+            flow, notice, committed);
+        Check(settled && flow.Screen() == ScreenId::Settlement &&
+                  notice.visible && notice.success &&
+                  notice.text == "結算完成",
+              "successful settlement reports completion and advances");
+    }
+
+    // ===== Persistence action feedback =====
+    {
+        Potato::Game::ActionNotice notice;
+        const auto saved = Potato::Gameplay::Ok(std::filesystem::path{});
+        Potato::Game::ShowActionResult(notice, saved, "存檔");
+        Check(notice.visible && notice.success &&
+                  notice.text == "存檔完成" &&
+                  notice.remainingMs ==
+                      Potato::Game::ACTION_NOTICE_LIFETIME_MS,
+              "successful persistence action produces visible feedback");
+
+        const auto failed = Potato::Gameplay::Fail<int>(
+            "io", "rename failed");
+        Potato::Game::ShowActionResult(notice, failed, "讀檔");
+        Check(notice.visible && !notice.success &&
+                  notice.text.find("讀檔失敗") == 0 &&
+                  notice.text.find("rename failed") != std::string::npos,
+              "failed persistence action exposes its reason");
+        Potato::Game::AdvanceActionNotice(notice, 1000);
+        Check(notice.visible &&
+                  notice.remainingMs ==
+                      Potato::Game::ACTION_NOTICE_LIFETIME_MS - 1000,
+              "notice remains visible for its configured interval");
+        Potato::Game::AdvanceActionNotice(
+            notice, Potato::Game::ACTION_NOTICE_LIFETIME_MS);
+        Check(!notice.visible && notice.text.empty(),
+              "expired notice clears its text");
+    }
+
     // ===== The table IS the spec — every (from,to) pair pinned =====
     {
         // Expected targets per screen (narrative moves only —

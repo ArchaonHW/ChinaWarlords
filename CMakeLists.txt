@@ -517,6 +517,11 @@ target_link_libraries(potato_test_squad PotatoGameplay)
 # TODO: POTATO_TESTS 清單為規劃項——目前以 CTest 直接註冊遊戲層測試
 enable_testing()
 add_test(NAME potato_test_gameplay COMMAND potato_test_gameplay)
+add_executable(potato_test_simulation_lod
+    Examples/MingGoRTS/potato_test_simulation_lod.cpp)
+target_include_directories(potato_test_simulation_lod PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(potato_test_simulation_lod PotatoGameplay)
+add_test(NAME potato_test_simulation_lod COMMAND potato_test_simulation_lod)
 add_test(NAME potato_test_json COMMAND potato_test_json)
 add_test(NAME potato_test_map COMMAND potato_test_map)
 add_test(NAME potato_test_squad COMMAND potato_test_squad)
@@ -661,6 +666,13 @@ target_include_directories(potato_test_world PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(potato_test_world PotatoCampaign)
 add_test(NAME potato_test_world COMMAND potato_test_world)
 
+# Epic 17 — Campaign world-agent persistence and LOD policy bridge.
+add_executable(potato_test_world_agents
+    Examples/MingGoRTS/potato_test_world_agents.cpp)
+target_include_directories(potato_test_world_agents PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(potato_test_world_agents PotatoCampaign)
+add_test(NAME potato_test_world_agents COMMAND potato_test_world_agents)
+
 # Story 12.4 — character model + creation (potato.character/1)
 add_executable(potato_test_character Examples/potato_test_character.cpp)
 target_include_directories(potato_test_character PRIVATE ${CMAKE_SOURCE_DIR})
@@ -671,6 +683,8 @@ add_test(NAME potato_test_character COMMAND potato_test_character)
 # position -> three-beat battle -> world writeback + gated claims
 add_executable(potato_test_encounter Examples/potato_test_encounter.cpp)
 target_include_directories(potato_test_encounter PRIVATE ${CMAKE_SOURCE_DIR})
+target_compile_definitions(potato_test_encounter PRIVATE
+    POTATO_TEST_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 target_link_libraries(potato_test_encounter PotatoCampaign)
 add_test(NAME potato_test_encounter COMMAND potato_test_encounter)
 
@@ -761,10 +775,27 @@ set_tests_properties(potato_verify_cli PROPERTIES DEPENDS potato_record_emit)
 if(WIN32)
     # Gameplay 層依賴方向守衛：禁 Rendering/GUI/Platform/GL 標頭
     add_test(NAME gameplay_dep_guard
-        COMMAND powershell -NoProfile -File ${CMAKE_SOURCE_DIR}/scripts/CheckGameplayDeps.ps1
+        # Scope the execution-policy override to this child process. The
+        # checked-in guard is a repository script; process scope avoids
+        # requiring a machine/user policy change on developer workstations.
+        COMMAND powershell -NoProfile -ExecutionPolicy Bypass
+            -File ${CMAKE_SOURCE_DIR}/scripts/CheckGameplayDeps.ps1
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 endif()
 endif() # POTATO_TESTS
+
+# File-backed tests use the OS temp directory. Point every CTest process at
+# its own build-local temp root so tests work in restricted workspaces and
+# can run in parallel without colliding on fixed fixture names.
+if(WIN32 AND POTATO_TESTS)
+    get_property(POTATO_CTEST_NAMES DIRECTORY PROPERTY TESTS)
+    foreach(test_name IN LISTS POTATO_CTEST_NAMES)
+        set(test_tmp_dir "${CMAKE_BINARY_DIR}/test-tmp/${test_name}")
+        file(MAKE_DIRECTORY "${test_tmp_dir}")
+        set_tests_properties(${test_name} PROPERTIES
+            ENVIRONMENT "TEMP=${test_tmp_dir};TMP=${test_tmp_dir}")
+    endforeach()
+endif()
 
 # 安裝 (暫時禁用)
 # install(TARGETS PotatoEngine SimpleExample PlatformTest

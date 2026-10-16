@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Campaign/Governance/Victory.h" // ChapterResolution
+#include "Campaign/World/EncounterSettle.h"
+#include "Game/Ui/ActionNotice.h"
+#include "Game/Ui/ScreenFlow.h"
 
 #include <cstdint>
 #include <string>
@@ -75,5 +78,12 @@ struct ReportPage {
 };
 ReportPage BuildReportPage(std::string chronicle,
                            bool settleReady, int w, int h);
+
+// Show the committed result and advance only when settlement succeeded.
+// A rejected settlement stays on the battle report so its reason remains
+// visible and the player can retry after resolving the reported constraint.
+bool PresentSettlementResult(
+    ScreenFlow& flow, ActionNotice& notice,
+    const Gameplay::Result<Campaign::EncounterSettlement>& result);
 
 } // namespace Potato::Game

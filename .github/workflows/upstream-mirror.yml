@@ -38,7 +38,7 @@ on:
       - 'Examples/**'
       - 'Tools/sync-potatoengine-upstream.sh'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, develop, "codex/**" ]
     paths:
       - 'Core/**'
       - 'Security/**'
