@@ -722,6 +722,13 @@ target_include_directories(potato_test_render PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(potato_test_render PotatoGame)
 add_test(NAME potato_test_render COMMAND potato_test_render)
 
+# MingGoRTS-only presentation tests stay outside the PotatoEngine mirror.
+add_executable(potato_test_sprite_animation
+    Examples/MingGoRTS/potato_test_sprite_animation.cpp)
+target_include_directories(potato_test_sprite_animation PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(potato_test_sprite_animation PotatoGame)
+add_test(NAME potato_test_sprite_animation COMMAND potato_test_sprite_animation)
+
 # Story 12.9 — overworld view / order menu / creation form
 add_executable(potato_test_overworld Examples/potato_test_overworld.cpp)
 target_include_directories(potato_test_overworld PRIVATE ${CMAKE_SOURCE_DIR})

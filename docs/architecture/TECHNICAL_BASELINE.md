@@ -7,7 +7,8 @@
 | 領域 | 目前技術與邊界 |
 | --- | --- |
 | 語言與建置 | C++20、CMake、MSVC / GCC；CTest 管理測試。 |
-| 引擎渲染 | `PotatoRendering` 靜態庫；OpenGL 3.3、GLFW、預生成 GLAD 與 Dear ImGui。`RenderingServer` 提供 GL 與 Dummy rasterizer 路徑；headless 測試不需要建立 GL context。 |
+| 引擎渲染 | `PotatoRendering` 靜態庫；OpenGL 3.3、GLFW、預生成 GLAD 與 Dear ImGui。`RenderingServer` 提供 GL 與 Dummy rasterizer 路徑；`SpriteAtlas` + `SpriteBatcher` 以單 draw call GPU instancing 繪製 atlas sprites，`RendererCanvasCull` 執行 bounds culling 與穩定 z 排序；headless 測試不需要建立 GL context。 |
+| MingGoRTS 2D 呈現 | `Game/Render/SpriteAtlas` 的 indexed-color tiles 可由純 CPU `Framebuffer` 繪製；`SpriteAnimation` 用顯式整數 tick 播放 loop/one-shot tile clips，校驗 frame id 並保持模擬層隔離。它與 PotatoRendering 的 PNG/UV GPU atlas 是分層用途，不新增跨 repo renderer 依賴。 |
 | 遊戲分層 | `PotatoGameplay` → `PotatoCampaign` → `PotatoGame`。Gameplay 不連結引擎渲染庫，保持 headless；呈現與遊戲外殼在上層。 |
 | 戰鬥模擬 | 固定 20 Hz、整數／定點運算、固定種子的 PRNG 與明確排序；模擬 tick 不執行檔案 I/O。LOD importance/capacity policy 已在 Gameplay 實作，尚不改變戰鬥 tick 或 replay 格式。 |
 | 內容與存檔 | 遊戲層使用自建 `Gameplay/Json/JsonValue`；內容與存檔使用版本化 `potato.<name>/<version>` schema，寫檔採暫存檔再 rename。 |
