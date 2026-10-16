@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <cstring>
+#include <map>
+#include <tuple>
 #include <utility>
 
 namespace Potato::Campaign {
@@ -85,6 +87,32 @@ bool ValidLodFactors(const Gameplay::SimulationLodFactors& f) {
     return valid(f.distance) && valid(f.combat) && valid(f.narrative) &&
            valid(f.strategic) && valid(f.playerInterest) &&
            valid(f.mythicImportance);
+}
+
+const char* LodName(Gameplay::SimulationLod lod) {
+    switch (lod) {
+    case Gameplay::SimulationLod::Full: return "FULL";
+    case Gameplay::SimulationLod::Reduced: return "REDUCED";
+    case Gameplay::SimulationLod::Abstract: return "ABSTRACT";
+    case Gameplay::SimulationLod::Aggregate: return "AGGREGATE";
+    case Gameplay::SimulationLod::Dormant: return "DORMANT";
+    }
+    return "DORMANT";
+}
+
+bool LodFromName(std::string_view name, Gameplay::SimulationLod& out) {
+    if (name == "FULL") out = Gameplay::SimulationLod::Full;
+    else if (name == "REDUCED") out = Gameplay::SimulationLod::Reduced;
+    else if (name == "ABSTRACT") out = Gameplay::SimulationLod::Abstract;
+    else if (name == "AGGREGATE") out = Gameplay::SimulationLod::Aggregate;
+    else if (name == "DORMANT") out = Gameplay::SimulationLod::Dormant;
+    else return false;
+    return true;
+}
+
+bool ValidLod(Gameplay::SimulationLod lod) {
+    return static_cast<std::uint8_t>(lod) <=
+           static_cast<std::uint8_t>(Gameplay::SimulationLod::Dormant);
 }
 
 // Bitcast a u64 counter to/from an int64 wire field (MintOutbox
@@ -316,7 +344,23 @@ Result<bool> WorldState::SetAgents(
                                         "agent IDs must be unique");
         }
     }
+
+    std::vector<WorldAgentLodState> nextLodStates;
+    nextLodStates.reserve(next.size());
+    for (const WorldAgentState& agent : next) {
+        const auto current = std::lower_bound(
+            agentLodStates_.begin(), agentLodStates_.end(), agent.id,
+            [](const WorldAgentLodState& state, std::uint64_t id) {
+                return state.agentId < id;
+            });
+        const Gameplay::SimulationLod lod =
+            current != agentLodStates_.end() && current->agentId == agent.id
+                ? current->lod
+                : Gameplay::SimulationLod::Dormant;
+        nextLodStates.push_back({agent.id, lod});
+    }
     agents_ = std::move(next);
+    agentLodStates_ = std::move(nextLodStates);
     return Gameplay::Ok(true);
 }
 
@@ -329,6 +373,84 @@ WorldState::PlanAgentLod(const Gameplay::SimulationLodPolicy& policy,
         subjects.push_back({agent.id, agent.lodFactors});
     }
     return policy.Plan(subjects, budget);
+}
+
+Result<bool> WorldState::ApplyAgentLodPlan(
+    std::span<const Gameplay::SimulationLodAssignment> plan) {
+    if (plan.size() != agents_.size() ||
+        agentLodStates_.size() != agents_.size()) {
+        return Gameplay::Fail<bool>(
+            "lod_plan", "LOD plan must cover every current world agent");
+    }
+
+    std::vector<WorldAgentLodState> nextStates;
+    nextStates.reserve(plan.size());
+    std::vector<WorldAgentLodTransition> changes;
+    changes.reserve(plan.size());
+    for (std::size_t i = 0; i < plan.size(); ++i) {
+        const Gameplay::SimulationLodAssignment& assignment = plan[i];
+        const WorldAgentState& agent = agents_[i];
+        const WorldAgentLodState& current = agentLodStates_[i];
+        if (assignment.agentId != agent.id || current.agentId != agent.id ||
+            assignment.importance < 0 || !ValidLod(assignment.lod)) {
+            return Gameplay::Fail<bool>(
+                "lod_plan", "LOD plan IDs, importance, or levels are invalid");
+        }
+        nextStates.push_back({assignment.agentId, assignment.lod});
+        if (current.lod != assignment.lod) {
+            changes.push_back(WorldAgentLodTransition{
+                day_, static_cast<std::uint64_t>(agentLodHistory_.size() +
+                                                 changes.size()),
+                agent.id, agent.publicNode, current.lod, assignment.lod});
+        }
+    }
+    if (changes.size() > MAX_LOD_EVENTS - agentLodHistory_.size()) {
+        return Gameplay::Fail<bool>("lod_history", "LOD history is full");
+    }
+
+    agentLodStates_ = std::move(nextStates);
+    agentLodHistory_.insert(agentLodHistory_.end(), changes.begin(),
+                            changes.end());
+    return Gameplay::Ok(true);
+}
+
+std::vector<WorldAgentLodAggregate> WorldState::AgentLodAggregates() const {
+    using GroupKey = std::tuple<std::string, bool, std::uint64_t>;
+    std::map<GroupKey, WorldAgentLodAggregate> groups;
+    const auto addFactor = [](std::uint64_t& total, std::uint16_t factor) {
+        total += factor;
+    };
+    for (std::size_t i = 0; i < agents_.size(); ++i) {
+        if (i >= agentLodStates_.size() ||
+            agentLodStates_[i].lod != Gameplay::SimulationLod::Aggregate) {
+            continue;
+        }
+        const WorldAgentState& agent = agents_[i];
+        const bool isolated = agent.aggregateGroupId == 0;
+        const std::uint64_t keyId = isolated ? agent.id : agent.aggregateGroupId;
+        const GroupKey key{agent.publicNode, isolated, keyId};
+        auto [it, inserted] = groups.try_emplace(key);
+        WorldAgentLodAggregate& aggregate = it->second;
+        if (inserted) {
+            aggregate.publicNode = agent.publicNode;
+            aggregate.aggregateGroupId = agent.aggregateGroupId;
+        }
+        aggregate.agentIds.push_back(agent.id);
+        addFactor(aggregate.factorTotals[0], agent.lodFactors.distance);
+        addFactor(aggregate.factorTotals[1], agent.lodFactors.combat);
+        addFactor(aggregate.factorTotals[2], agent.lodFactors.narrative);
+        addFactor(aggregate.factorTotals[3], agent.lodFactors.strategic);
+        addFactor(aggregate.factorTotals[4], agent.lodFactors.playerInterest);
+        addFactor(aggregate.factorTotals[5], agent.lodFactors.mythicImportance);
+    }
+
+    std::vector<WorldAgentLodAggregate> result;
+    result.reserve(groups.size());
+    for (auto& [key, aggregate] : groups) {
+        (void)key;
+        result.push_back(std::move(aggregate));
+    }
+    return result;
 }
 
 Result<JsonValue> WorldState::ToJson() const {
@@ -382,6 +504,10 @@ Result<JsonValue> WorldState::ToJson() const {
             JsonValue::Object ja;
             ja["id"] = JsonValue::Int(ToWire(agent.id));
             ja["public_node"] = JsonValue::String(agent.publicNode);
+            if (agent.aggregateGroupId != 0) {
+                ja["aggregate_group"] =
+                    JsonValue::Int(ToWire(agent.aggregateGroupId));
+            }
             JsonValue::Object jf;
             jf["distance"] = JsonValue::Int(agent.lodFactors.distance);
             jf["combat"] = JsonValue::Int(agent.lodFactors.combat);
@@ -395,6 +521,34 @@ Result<JsonValue> WorldState::ToJson() const {
             agents.push_back(JsonValue::MakeObject(std::move(ja)));
         }
         root["agents"] = JsonValue::MakeArray(std::move(agents));
+    }
+    if (!agentLodStates_.empty() || !agentLodHistory_.empty()) {
+        JsonValue::Object runtime;
+        JsonValue::Array current;
+        current.reserve(agentLodStates_.size());
+        for (const WorldAgentLodState& state : agentLodStates_) {
+            JsonValue::Object entry;
+            entry["id"] = JsonValue::Int(ToWire(state.agentId));
+            entry["lod"] = JsonValue::String(LodName(state.lod));
+            current.push_back(JsonValue::MakeObject(std::move(entry)));
+        }
+        runtime["current"] = JsonValue::MakeArray(std::move(current));
+
+        JsonValue::Array events;
+        events.reserve(agentLodHistory_.size());
+        for (const WorldAgentLodTransition& event : agentLodHistory_) {
+            JsonValue::Object entry;
+            entry["day"] = JsonValue::Int(event.day);
+            entry["seq"] = JsonValue::Int(
+                static_cast<std::int64_t>(event.sequence));
+            entry["id"] = JsonValue::Int(ToWire(event.agentId));
+            entry["public_node"] = JsonValue::String(event.publicNode);
+            entry["from"] = JsonValue::String(LodName(event.from));
+            entry["to"] = JsonValue::String(LodName(event.to));
+            events.push_back(JsonValue::MakeObject(std::move(entry)));
+        }
+        runtime["events"] = JsonValue::MakeArray(std::move(events));
+        root["lod_runtime"] = JsonValue::MakeObject(std::move(runtime));
     }
     if (!queue_.empty()) {
         std::vector<WorldEvent> sorted = queue_;
@@ -643,6 +797,14 @@ Result<WorldState> WorldState::FromJson(const JsonValue& doc) {
             WorldAgentState agent;
             agent.id = FromWire(ja["id"].AsInt());
             agent.publicNode = *node;
+            if (ja.Has("aggregate_group")) {
+                const JsonValue& group = ja["aggregate_group"];
+                if (!group.IsInt()) {
+                    return Gameplay::Fail<WorldState>(
+                        "world", "agent aggregate group bad");
+                }
+                agent.aggregateGroupId = FromWire(group.AsInt());
+            }
             if (!readFactor("distance", agent.lodFactors.distance) ||
                 !readFactor("combat", agent.lodFactors.combat) ||
                 !readFactor("narrative", agent.lodFactors.narrative) ||
@@ -667,6 +829,71 @@ Result<WorldState> WorldState::FromJson(const JsonValue& doc) {
                                                   "agent IDs must be unique");
             }
         }
+    }
+    s.agentLodStates_.reserve(s.agents_.size());
+    for (const WorldAgentState& agent : s.agents_) {
+        s.agentLodStates_.push_back(
+            {agent.id, Gameplay::SimulationLod::Dormant});
+    }
+    if (doc.Has("lod_runtime")) {
+        const JsonValue& runtime = doc["lod_runtime"];
+        if (!runtime.IsObject() || !runtime["current"].IsArray() ||
+            !runtime["events"].IsArray() ||
+            runtime["current"].Size() != s.agents_.size() ||
+            runtime["events"].Size() > MAX_LOD_EVENTS) {
+            return Gameplay::Fail<WorldState>(
+                "world", "'lod_runtime' shape/count bad");
+        }
+
+        std::vector<WorldAgentLodState> current;
+        current.reserve(runtime["current"].Size());
+        for (std::size_t i = 0; i < runtime["current"].Size(); ++i) {
+            const JsonValue& entry = runtime["current"].At(i);
+            const std::string* lodName = entry.FindString("lod");
+            Gameplay::SimulationLod lod;
+            if (!entry.IsObject() || !entry["id"].IsInt() ||
+                lodName == nullptr || !LodFromName(*lodName, lod)) {
+                return Gameplay::Fail<WorldState>(
+                    "world", "LOD current entry bad");
+            }
+            const std::uint64_t id = FromWire(entry["id"].AsInt());
+            if (id != s.agents_[i].id) {
+                return Gameplay::Fail<WorldState>(
+                    "world", "LOD current IDs must match agents in order");
+            }
+            current.push_back({id, lod});
+        }
+
+        std::vector<WorldAgentLodTransition> history;
+        history.reserve(runtime["events"].Size());
+        std::int64_t previousDay = 0;
+        for (std::size_t i = 0; i < runtime["events"].Size(); ++i) {
+            const JsonValue& entry = runtime["events"].At(i);
+            const JsonValue& day = entry["day"];
+            const JsonValue& sequence = entry["seq"];
+            const JsonValue& id = entry["id"];
+            const std::string* node = entry.FindString("public_node");
+            const std::string* fromName = entry.FindString("from");
+            const std::string* toName = entry.FindString("to");
+            Gameplay::SimulationLod from;
+            Gameplay::SimulationLod to;
+            if (!entry.IsObject() || !day.IsInt() || day.AsInt() < 0 ||
+                day.AsInt() > s.day_ || !sequence.IsInt() ||
+                sequence.AsInt() != static_cast<std::int64_t>(i) ||
+                !id.IsInt() || node == nullptr || !ValidId(*node) ||
+                fromName == nullptr || toName == nullptr ||
+                !LodFromName(*fromName, from) ||
+                !LodFromName(*toName, to) || from == to ||
+                (i != 0 && day.AsInt() < previousDay)) {
+                return Gameplay::Fail<WorldState>(
+                    "world", "LOD transition event bad/order invalid");
+            }
+            history.push_back({day.AsInt(), static_cast<std::uint64_t>(i),
+                               FromWire(id.AsInt()), *node, from, to});
+            previousDay = day.AsInt();
+        }
+        s.agentLodStates_ = std::move(current);
+        s.agentLodHistory_ = std::move(history);
     }
     return Gameplay::Ok(std::move(s));
 }
