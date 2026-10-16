@@ -101,10 +101,22 @@ void Framebuffer::DrawLine(int x0, int y0, int x1, int y1,
 void Framebuffer::DrawTile(const SpriteAtlas& atlas,
                            const SpriteTile& tile, int px, int py,
                            int shade) {
-    const int s = shade < 0 ? 0 : (shade > 255 ? 255 : shade);
     const int tpx = atlas.TilePx();
-    for (int ty = 0; ty < tpx; ++ty) {
-        for (int tx = 0; tx < tpx; ++tx) {
+    if (tpx <= 0 || w_ <= 0 || h_ <= 0 || px <= -tpx || py <= -tpx ||
+        px >= w_ || py >= h_) {
+        return;
+    }
+
+    // Intersect the source tile with the framebuffer before walking pixels.
+    // Guarding fully offscreen coordinates above keeps these negations and
+    // width/height subtractions within the small tile/framebuffer range.
+    const int txBegin = px < 0 ? -px : 0;
+    const int tyBegin = py < 0 ? -py : 0;
+    const int txEnd = std::min(tpx, w_ - px);
+    const int tyEnd = std::min(tpx, h_ - py);
+    const int s = shade < 0 ? 0 : (shade > 255 ? 255 : shade);
+    for (int ty = tyBegin; ty < tyEnd; ++ty) {
+        for (int tx = txBegin; tx < txEnd; ++tx) {
             const std::uint8_t idx = tile.indices
                 [static_cast<std::size_t>(ty) *
                      static_cast<std::size_t>(tpx) +

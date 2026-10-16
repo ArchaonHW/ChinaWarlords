@@ -33,6 +33,8 @@ PotatoEngine  ←  Gameplay   ←  Campaign   ←  Game（外殼）
 四層皆已落地：`Gameplay/`（Sim/Doctrine/Fog/Json/…）、
 `Campaign/`（Ledger/Myth/Narrative/Save/…）、`Game/`（Hud/Render/Shell）、
 `assets/`（bencao、doctrine、encounters、narrative、worlds 等 JSON 內容）。
+`Game/Render` 使用 indexed-color `SpriteAtlas` 與 headless RGBA8 `Framebuffer`；
+tile blit 先裁到可見畫面範圍，動畫則由明確整數 tick 推進，不改變確定性戰鬥模擬。
 
 ### 目錄
 
