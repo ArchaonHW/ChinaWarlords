@@ -129,10 +129,6 @@ FULL/REDUCED/ABSTRACT/AGGREGATE/DORMANT scheduler are still not connected.
 
 ## Scope boundary and next work
 
-Recommended next sequence:
-
-1. Add an authored transition/replay scenario covering all five levels and
-   confirm how province-level AGGREGATE state maps onto these cohort snapshots.
 2. Add measured per-backend compute budgets. Keep CPU as the deterministic
    reference; only add GPU/NPU paths after parity and replay behavior are
    specified.

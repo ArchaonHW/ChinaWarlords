@@ -146,6 +146,7 @@ ctest -C Release --output-on-failure
 ## 文件索引
 
 - [docs/](docs/index.md)——引擎指南、架構、研究報告
+- [技術基線](docs/architecture/TECHNICAL_BASELINE.md)——目前已驗證的技術與依賴邊界；舊版引擎概覽中的方向性方案不代表已採用
 
 以下規劃產物為**本地開發文件**（`_bmad-output/` 刻意不進版控，
 clone 後不會出現；僅供持有該目錄的開發環境參考）：

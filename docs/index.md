@@ -1,15 +1,16 @@
 # MingGoRTS 文檔索引
 
-```
+~~~
 docs/
 ├── index.md          # 本索引
 ├── README.md         # 文檔導航
 ├── guides/           # 使用指南與建置說明
 ├── architecture/     # 架構設計與開發計劃
+├── narrative/        # 世界觀、主線劇情與敘事規格
 ├── reports/          # 整合報告與稽核
 ├── research/         # 研究文檔
 └── archive/          # 歷史完成報告(已整合)
-```
+~~~
 
 ## 📚 指南 (guides/)
 
@@ -22,12 +23,18 @@ docs/
 
 ## 🏗️ 架構 (architecture/)
 
+- **[TECHNICAL_BASELINE.md](./architecture/TECHNICAL_BASELINE.md)** — 依目前原始碼整理的技術基線，區分已實作能力與規劃項目
 - **[MINGGORTS_IDE_ARCHITECTURE.md](./architecture/MINGGORTS_IDE_ARCHITECTURE.md)** — IDE 架構設計(核心架構、AI 整合層、專門化代理)
 - **[MINGGORTS_IDE_FULL_DEVELOPMENT_PLAN.md](./architecture/MINGGORTS_IDE_FULL_DEVELOPMENT_PLAN.md)** — IDE 完整開發計劃
 - **[POTATO_ENGINE_ARCHITECTURE.md](./architecture/POTATO_ENGINE_ARCHITECTURE.md)** — Potato Engine 獨立架構設計(原 PotatoEngine/ARCHITECTURE)
 - **[GAME_UI_UX_DESIGN.md](./architecture/GAME_UI_UX_DESIGN.md)** — 遊戲主畫面 UI/UX 設計規劃(完整畫面流程 S0–S4 + Epic 13 工項拆解)
 
 - **[SIMULATION_LOD.md](./architecture/SIMULATION_LOD.md)** — Deterministic hierarchical simulation LOD policy and implementation plan
+
+## 📜 敘事 (narrative/)
+
+- **[REPUBLICAN_EPIC_STORY_BIBLE.md](./narrative/REPUBLICAN_EPIC_STORY_BIBLE.md)** — 民國史實主線與神話輔線整合規格、24 章編年及黃花崗首個切片
+- **[STRATEGIC_GOVERNANCE_FRAMEWORK.md](./narrative/STRATEGIC_GOVERNANCE_FRAMEWORK.md)** — 權力自制、三民主義與治平原則的玩法轉譯
 
 ## 📊 報告 (reports/)
 
@@ -40,7 +47,7 @@ docs/
 
 ## 🗄️ 歸檔 (archive/)
 
-12 份原始開發完成報告,內容已整合至 `reports/CONSOLIDATED_COMPLETION_REPORT.md`,詳見 [archive/README.md](./archive/README.md)。
+12 份原始開發完成報告,內容已整合至 reports/CONSOLIDATED_COMPLETION_REPORT.md，詳見 [archive/README.md](./archive/README.md)。
 
 ## 🔗 相關鏈接
 
@@ -50,4 +57,4 @@ docs/
 
 ---
 
-**🥔 MingGoRTS 文檔索引** — 最後更新:2026-09-16
+**🥔 MingGoRTS 文檔索引** — 最後更新:2026-10-15
