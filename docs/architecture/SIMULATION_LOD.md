@@ -101,8 +101,6 @@ them requires the activation and rehydration contract below.
 
 ## Scope boundary and next work
 
-Recommended next sequence:
-
 1. Define deterministic state projection and rehydration for evolving agent
    snapshots before adding live ticks or distributing cohort state.
 2. Add measured per-backend compute budgets. Keep CPU as the deterministic
