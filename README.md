@@ -116,7 +116,7 @@ cd build
 ctest -C Release --output-on-failure
 ```
 
-- CTest 共 43 個測試（Linux、2026-10-15 CI 驗證全綠）及 44 個測試
+- CTest 共 44 個測試（Linux）及 45 個測試
   （Windows，另含 `gameplay_dep_guard`）：`potato_test_*` 單元測試、
   record/verify CLI e2e、引擎測試（RenderingServer、LLMToolBridge、Zeta 等）。
   測試數以 `ctest -N` 顯示為準；Windows CTest 會為每個測試隔離 TEMP/TMP，
