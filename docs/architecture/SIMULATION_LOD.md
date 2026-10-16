@@ -85,6 +85,12 @@ them requires the activation and rehydration contract below.
 
 ## Scope boundary and next work
 
+This slice defines deterministic level selection, capacity enforcement, and
+the campaign's public-data bridge. It does not yet run different update
+kernels, schedule CPU/GPU/NPU work, or change the battle tick/replay format.
+Keeping that boundary avoids introducing a second tick system before reduced
+and abstract state representations exist.
+
 Recommended sequence:
 
 1. Define AGGREGATE and DORMANT activation/rehydration rules, with state
