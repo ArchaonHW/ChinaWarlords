@@ -6,6 +6,7 @@
 #include "Gameplay/Sim/SimulationLod.h"
 #include "Gameplay/Sim/Sim.h" // Prng — the dedicated world stream
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -80,9 +81,44 @@ struct WorldAgentState {
     std::uint64_t id = 0; // stable within this world's campaign save
     std::string publicNode;
     Gameplay::SimulationLodFactors lodFactors;
+    // Optional authored/public aggregation cohort. Zero keeps the agent
+    // isolated even when another agent shares its map node.
+    std::uint64_t aggregateGroupId = 0;
 
     friend bool operator==(const WorldAgentState&,
                            const WorldAgentState&) = default;
+};
+
+struct WorldAgentLodState {
+    std::uint64_t agentId = 0;
+    Gameplay::SimulationLod lod = Gameplay::SimulationLod::Dormant;
+
+    friend bool operator==(const WorldAgentLodState&,
+                           const WorldAgentLodState&) = default;
+};
+
+struct WorldAgentLodTransition {
+    std::int64_t day = 0;
+    std::uint64_t sequence = 0; // index in the append-only LOD history
+    std::uint64_t agentId = 0;
+    std::string publicNode;
+    Gameplay::SimulationLod from = Gameplay::SimulationLod::Dormant;
+    Gameplay::SimulationLod to = Gameplay::SimulationLod::Dormant;
+
+    friend bool operator==(const WorldAgentLodTransition&,
+                           const WorldAgentLodTransition&) = default;
+};
+
+// Derived regional summary for agents currently assigned AGGREGATE.
+// It preserves member identity and sums only their public LOD factors.
+struct WorldAgentLodAggregate {
+    std::string publicNode;
+    std::uint64_t aggregateGroupId = 0;
+    std::vector<std::uint64_t> agentIds;
+    std::array<std::uint64_t, 6> factorTotals{};
+
+    friend bool operator==(const WorldAgentLodAggregate&,
+                           const WorldAgentLodAggregate&) = default;
 };
 
 class WorldState {
@@ -91,6 +127,7 @@ public:
     static constexpr std::size_t MAX_EVENTS = 1024;   // queued
     static constexpr std::size_t MAX_RESOLVED = 4096;
     static constexpr std::size_t MAX_AGENTS = 100000;
+    static constexpr std::size_t MAX_LOD_EVENTS = 1000000;
     static constexpr std::size_t MAX_ID_LEN = 64;
     static constexpr std::int64_t MAX_DAY = 36500;    // ~100 yrs
 
@@ -207,11 +244,27 @@ public:
     Gameplay::Result<bool> SetAgents(
         const WorldMap& map, std::span<const WorldAgentState> agents);
     const std::vector<WorldAgentState>& Agents() const { return agents_; }
-    // Pure projection into the Gameplay policy. Assignments are derived,
-    // sorted by stable ID, and intentionally not persisted.
+    // Pure projection into the Gameplay policy. The plan is derived and
+    // sorted by stable ID; ApplyAgentLodPlan persists an explicitly chosen
+    // current tier separately from the policy inputs.
     Gameplay::Result<std::vector<Gameplay::SimulationLodAssignment>>
     PlanAgentLod(const Gameplay::SimulationLodPolicy& policy,
                  const Gameplay::SimulationBudget& budget) const;
+    // Applies a complete plan at the current campaign day. New agents start
+    // DORMANT; reactivation reuses their persisted public agent records.
+    // Invalid or partial plans are rejected without changing state/history.
+    Gameplay::Result<bool> ApplyAgentLodPlan(
+        std::span<const Gameplay::SimulationLodAssignment> plan);
+    const std::vector<WorldAgentLodState>& AgentLodStates() const {
+        return agentLodStates_;
+    }
+    const std::vector<WorldAgentLodTransition>& AgentLodHistory() const {
+        return agentLodHistory_;
+    }
+    // AGGREGATE membership is keyed by public node and nonzero authored group
+    // ID. Group ID zero means a one-agent cohort. Output has deterministic
+    // node/group/member order.
+    std::vector<WorldAgentLodAggregate> AgentLodAggregates() const;
 
     Gameplay::Result<Gameplay::JsonValue> ToJson() const;
     static Gameplay::Result<WorldState> FromJson(
@@ -230,6 +283,8 @@ private:
     std::int64_t marchEta_ = 0;                   // arrival day
     std::map<std::string, SightingMark> sightings_;
     std::vector<WorldAgentState> agents_; // sorted by stable id
+    std::vector<WorldAgentLodState> agentLodStates_; // sorted by stable id
+    std::vector<WorldAgentLodTransition> agentLodHistory_;
     std::optional<QuantumOracle> oracle_;   // 13.6 — second stream
     std::uint64_t oracleSeed_ = 0;          // persisted for resume
 };

@@ -52,10 +52,26 @@ by ID and persisted in the optional `agents` array of `potato.worldstate/1`,
 which is already carried inside `potato.campaign/2` saves.
 
 `WorldState::PlanAgentLod` projects those records into the pure Gameplay policy.
-The assignments remain derived: they are not stored, so loading the same save
-and applying the same policy and budget reproduces the plan. Campaign callers
-must provide only locations and factors that are public or observed; this
-record is not a channel for hidden enemy position or battle truth.
+The target assignments remain derived from policy and budget. Campaign code
+may apply a complete canonical plan with `WorldState::ApplyAgentLodPlan`; this
+atomically stores the current tier and appends one event for each changed
+agent. Reapplying an unchanged plan adds no events. The optional `lod_runtime`
+field in `potato.worldstate/1` persists both the current tiers and transition
+history. Older saves without that field load their current agents as DORMANT.
+Malformed or partial runtime data rejects the entire document.
+
+AGGREGATE summaries are derived from agents currently assigned that tier.
+Agents combine only when they share a public map node and the same nonzero
+authored `aggregateGroupId`; a zero group ID keeps an agent isolated. A summary
+contains stable member IDs and sums of the six public importance factors.
+DORMANT agents keep their campaign-visible identity and factors, so a later
+policy plan can reactivate them when those inputs change. This is metadata
+rehydration only: Campaign currently has no evolving per-agent simulation
+snapshot to restore or distribute. Future live simulation work must define a
+deterministic snapshot and projection contract before changing agent state.
+Campaign callers must provide only locations and factors that are public or
+observed; these records are not a channel for hidden enemy position or battle
+truth.
 
 ## REDUCED and ABSTRACT macro kernels
 
@@ -85,21 +101,13 @@ them requires the activation and rehydration contract below.
 
 ## Scope boundary and next work
 
-This slice defines deterministic level selection, capacity enforcement, and
-the campaign's public-data bridge. It does not yet run different update
-kernels, schedule CPU/GPU/NPU work, or change the battle tick/replay format.
-Keeping that boundary avoids introducing a second tick system before reduced
-and abstract state representations exist.
-
-Recommended sequence:
-
-1. Define AGGREGATE and DORMANT activation/rehydration rules, with state
-   transitions represented in the campaign event history.
+1. Define deterministic state projection and rehydration for evolving agent
+   snapshots before adding live ticks or distributing cohort state.
 2. Add measured per-backend compute budgets. Keep CPU as the deterministic
    reference; only add GPU/NPU paths after parity and replay behavior are
    specified.
-3. Add an authored end-to-end scenario that exercises all LOD levels before
-   connecting the policy to live world ticks.
+3. Add an authored end-to-end scenario that exercises all LOD levels and
+   save/replay behavior before connecting the policy to live world ticks.
 
 The unit test also plans the specification's mixed scale of 100 FULL and
 100,000 ABSTRACT entities. This verifies classification and allocation
