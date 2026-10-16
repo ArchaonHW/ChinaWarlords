@@ -18,6 +18,7 @@
 
 - Vulkan、DirectX、PBR、光線追蹤、DLSS、Bullet 與 OpenAL 不屬於目前已驗證的 MingGoRTS 執行技術基線。
 - StonePotatoes 的 Vulkan 編輯器與其 C++ SDK 不會因為同一開發者維護而自動成為 MingGoRTS 依賴；跨 repo 共用前需先定義 ABI/API、版本與安裝後 consumer 驗收。
+- StonePotatoes Editor 的 ECS 二進位場景存檔是該引擎內部格式，不是 MingGoRTS 的公開交換格式；若未來需要跨專案互通，應另定有版本的 schema 與相容性驗收。
 - Campaign world-agent LOD identity/persistence 屬於後續故事與 PR 工作；合併前不能描述為 main 已具備。
 
 ## 技術演進原則
