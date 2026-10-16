@@ -64,11 +64,10 @@ AGGREGATE summaries are derived from agents currently assigned that tier.
 Agents combine only when they share a public map node and the same nonzero
 authored `aggregateGroupId`; a zero group ID keeps an agent isolated. A summary
 contains stable member IDs and sums of the six public importance factors.
-DORMANT agents keep their campaign-visible identity and factors, so a later
-policy plan can reactivate them when those inputs change. This is metadata
-rehydration only: Campaign currently has no evolving per-agent simulation
-snapshot to restore or distribute. Future live simulation work must define a
-deterministic snapshot and projection contract before changing agent state.
+DORMANT campaign agents keep their campaign-visible identity and factors, so a
+later policy plan can reactivate them when those inputs change. Campaign still
+does not own evolving battle state; it must not become a channel for hidden
+enemy state. Gameplay snapshot projection is defined separately below.
 Campaign callers must provide only locations and factors that are public or
 observed; these records are not a channel for hidden enemy position or battle
 truth.
@@ -97,17 +96,44 @@ Reference tests pin a REDUCED pressure and recovery sequence, an ABSTRACT
 two-of-ten attrition scenario, deterministic replay of each input, and parity
 between both kernels for a one-member cohort. These kernels remain isolated
 from campaign persistence, event history, and the live battle tick; connecting
-them requires the activation and rehydration contract below.
+them to a live scheduler requires the lifecycle contract below.
+
+## Agent snapshot projection
+
+`SimulationRosterSnapshot` is a member-level simulation snapshot with stable
+agent IDs, bounded strength/morale/supply values, and one shared elapsed-tick
+clock. `ProjectToAbstract` sorts members by unsigned ID, rejects duplicates or
+out-of-range values, and emits an `AbstractSimulationSnapshot` with the sorted
+membership and exact integer totals. Reordering the input roster cannot change
+the result.
+
+`RehydrateFromAbstract` restores members in that same canonical order. For
+each measure it divides the total evenly; the remainder rotates from the ID at
+`elapsedTicks % population` and wraps through ascending IDs. This preserves
+population, all three totals, and elapsed ticks exactly, and repeated
+rehydration of the same snapshot produces identical member values. Individual
+pre-aggregation values are not recoverable; rehydrated values are the explicit
+even distribution implied by this contract. Invalid membership or totals
+leave the output unchanged. These allocation and sorting operations run at an
+LOD transition boundary, not in the 20 Hz tick.
+
+The snapshot types live in `Gameplay::Sim`, where simulation truth belongs.
+They are not serialized into Campaign's public agent projection. The
+transition contract is to retain a DORMANT roster snapshot and its clock
+without advancing it, so reactivation can use that exact member roster. A
+roster has one shared clock; a dormant roster with a different clock must stay
+separate until the live scheduler defines how to align it. This PR supplies
+the snapshot transform but does not schedule or execute those transitions.
+AGGREGATE province-level combat state and the live
+FULL/REDUCED/ABSTRACT/AGGREGATE/DORMANT scheduler are still not connected.
 
 ## Scope boundary and next work
 
-1. Define deterministic state projection and rehydration for evolving agent
-   snapshots before adding live ticks or distributing cohort state.
 2. Add measured per-backend compute budgets. Keep CPU as the deterministic
    reference; only add GPU/NPU paths after parity and replay behavior are
    specified.
-3. Add an authored end-to-end scenario that exercises all LOD levels and
-   save/replay behavior before connecting the policy to live world ticks.
+3. Connect snapshots to live world ticks only after the scheduler and
+   public-versus-hidden state boundaries are tested end to end.
 
 The unit test also plans the specification's mixed scale of 100 FULL and
 100,000 ABSTRACT entities. This verifies classification and allocation

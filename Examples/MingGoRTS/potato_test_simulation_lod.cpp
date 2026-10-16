@@ -209,6 +209,77 @@ int main() {
               "ABSTRACT rejects excessive losses transactionally");
     }
 
+    // The abstract snapshot carries canonical identities and exact cohort
+    // totals. Rehydration divides values evenly and rotates remainders using
+    // the shared elapsed tick, so identical snapshots replay identically.
+    {
+        const SimulationRosterSnapshot roster{
+            23, {{30, 1000, 5, 10}, {10, 0, 600, 5}, {20, 900, 1000, 1000}}};
+        AbstractSimulationSnapshot abstract{};
+        const bool projected = ProjectToAbstract(roster, abstract);
+        Check(projected, "member roster projects into an abstract snapshot");
+        Check(abstract.agentIds == std::vector<std::uint64_t>{10, 20, 30} &&
+                  abstract.cohort == AbstractCohortState{3, 1900, 1605, 1015, 23},
+              "abstract projection canonicalizes IDs and preserves exact totals");
+
+        const SimulationRosterSnapshot reordered{
+            23, {{20, 900, 1000, 1000}, {30, 1000, 5, 10}, {10, 0, 600, 5}}};
+        AbstractSimulationSnapshot reorderedAbstract{};
+        Check(ProjectToAbstract(reordered, reorderedAbstract) &&
+                  reorderedAbstract == abstract,
+              "abstract projection is independent of roster input order");
+
+        SimulationRosterSnapshot restored{};
+        SimulationRosterSnapshot replayed{};
+        const bool restoredOk = RehydrateFromAbstract(abstract, restored);
+        const bool replayedOk = RehydrateFromAbstract(abstract, replayed);
+        Check(restoredOk && replayedOk && restored == replayed &&
+                  restored.elapsedTicks == 23 &&
+                  restored.agents == std::vector<SimulationAgentSnapshot>{
+                      {10, 633, 535, 338},
+                      {20, 633, 535, 338},
+                      {30, 634, 535, 339}},
+              "rehydration redistributes totals deterministically by ID and tick");
+
+        AbstractSimulationSnapshot roundTripped{};
+        Check(ProjectToAbstract(restored, roundTripped) &&
+                  roundTripped == abstract,
+              "rehydrated member values preserve abstract totals exactly");
+
+        AbstractSimulationSnapshot unchanged = abstract;
+        const AbstractSimulationSnapshot beforeBadProjection = unchanged;
+        const SimulationRosterSnapshot duplicateIds{
+            23, {{10, 1, 1, 1}, {10, 2, 2, 2}}};
+        Check(!ProjectToAbstract(duplicateIds, unchanged) &&
+                  unchanged == beforeBadProjection,
+              "duplicate snapshot IDs reject without changing output");
+        const SimulationRosterSnapshot outOfRangeMeasure{
+            23, {{1, 1001, 0, 0}}};
+        Check(!ProjectToAbstract(outOfRangeMeasure, unchanged) &&
+                  unchanged == beforeBadProjection,
+              "out-of-range snapshot measure rejects transactionally");
+
+        SimulationRosterSnapshot unchangedRoster{9, {{99, 1, 2, 3}}};
+        const SimulationRosterSnapshot beforeBadRehydrate = unchangedRoster;
+        AbstractSimulationSnapshot invalidMembership = abstract;
+        invalidMembership.agentIds[1] = invalidMembership.agentIds[0];
+        Check(!RehydrateFromAbstract(invalidMembership, unchangedRoster) &&
+                  unchangedRoster == beforeBadRehydrate,
+              "invalid abstract membership rejects without changing output");
+        AbstractSimulationSnapshot invalidTotals = abstract;
+        invalidTotals.cohort.supplyTotal = 3001;
+        Check(!RehydrateFromAbstract(invalidTotals, unchangedRoster) &&
+                  unchangedRoster == beforeBadRehydrate,
+              "out-of-range abstract totals reject transactionally");
+
+        AbstractSimulationSnapshot emptyAbstract{};
+        SimulationRosterSnapshot emptyRoster{};
+        Check(ProjectToAbstract(emptyRoster, emptyAbstract) &&
+                  RehydrateFromAbstract(emptyAbstract, emptyRoster) &&
+                  emptyRoster.agents.empty() && emptyRoster.elapsedTicks == 0,
+              "empty roster snapshot round-trips as a zero cohort");
+    }
+
     // A one-member cohort provides a parity reference between both kernels.
     {
         const ReducedAgentState reducedInitial{350, 725, 900, 40};

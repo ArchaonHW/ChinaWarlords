@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 namespace Potato::Gameplay {
 
@@ -59,5 +60,54 @@ struct AbstractLodStep {
 bool AdvanceAbstract(const AbstractCohortState& current,
                      const AbstractLodStep& step,
                      AbstractCohortState& next) noexcept;
+
+// Canonical per-agent snapshot for the bounded strength/morale/supply
+// measures used by the macro kernels. These are simulation state, not
+// campaign visibility or LOD importance factors.
+struct SimulationAgentSnapshot {
+    std::uint64_t agentId = 0;
+    std::uint16_t strength = 0;
+    std::uint16_t morale = 0;
+    std::uint16_t supply = 0;
+
+    friend bool operator==(const SimulationAgentSnapshot&,
+                           const SimulationAgentSnapshot&) = default;
+};
+
+// A member-level roster and its shared simulation clock. Input member order
+// is unspecified; projection canonicalizes by stable agent ID.
+struct SimulationRosterSnapshot {
+    std::uint64_t elapsedTicks = 0;
+    std::vector<SimulationAgentSnapshot> agents;
+
+    friend bool operator==(const SimulationRosterSnapshot&,
+                           const SimulationRosterSnapshot&) = default;
+};
+
+// ABSTRACT retains exact cohort totals and stable member identities, but not
+// each member's original measure values.
+struct AbstractSimulationSnapshot {
+    std::vector<std::uint64_t> agentIds; // strictly ascending
+    AbstractCohortState cohort;
+
+    friend bool operator==(const AbstractSimulationSnapshot&,
+                           const AbstractSimulationSnapshot&) = default;
+};
+
+// Projects a member roster into exact integer totals. Duplicate IDs,
+// out-of-range measures, or an unrepresentable population reject the whole
+// operation and leave `next` unchanged. This allocation/sort path is for LOD
+// transitions, not the fixed-rate simulation tick.
+bool ProjectToAbstract(const SimulationRosterSnapshot& current,
+                       AbstractSimulationSnapshot& next);
+
+// Rehydrates member records in ascending ID order. Each total is divided by
+// population; any remainder rotates from agentIds[elapsedTicks % population]
+// through stable-ID order. Cohort totals and elapsedTicks are preserved
+// exactly, while individual values are a deterministic reconstruction rather
+// than their pre-aggregation values.
+// Invalid membership or totals reject without changing `next`.
+bool RehydrateFromAbstract(const AbstractSimulationSnapshot& current,
+                           SimulationRosterSnapshot& next);
 
 } // namespace Potato::Gameplay
