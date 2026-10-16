@@ -47,7 +47,8 @@ struct RosterEntry {
 //
 // potato.campaign/2 (Story 12.8) adds two optional sub-docs on the
 // same convention: `world` carries a `potato.worldstate/1` doc
-// verbatim and `character` carries the chosen commander's
+// verbatim (including stable campaign-agent identities and public
+// LOD inputs) and `character` carries the chosen commander's
 // `potato.character/1` doc. Both absent == no world bound / no
 // commander chosen — a worldless campaign stays byte-minimal.
 // `intel`/`myth`/`codex` are resident stores (potato.intel/1,

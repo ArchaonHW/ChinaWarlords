@@ -666,6 +666,13 @@ target_include_directories(potato_test_world PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(potato_test_world PotatoCampaign)
 add_test(NAME potato_test_world COMMAND potato_test_world)
 
+# Epic 17 — Campaign world-agent persistence and LOD policy bridge.
+add_executable(potato_test_world_agents
+    Examples/MingGoRTS/potato_test_world_agents.cpp)
+target_include_directories(potato_test_world_agents PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(potato_test_world_agents PotatoCampaign)
+add_test(NAME potato_test_world_agents COMMAND potato_test_world_agents)
+
 # Story 12.4 — character model + creation (potato.character/1)
 add_executable(potato_test_character Examples/potato_test_character.cpp)
 target_include_directories(potato_test_character PRIVATE ${CMAKE_SOURCE_DIR})

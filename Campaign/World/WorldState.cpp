@@ -78,6 +78,15 @@ bool ValidId(std::string_view s) {
     return !s.empty() && s.size() <= WorldState::MAX_ID_LEN;
 }
 
+bool ValidLodFactors(const Gameplay::SimulationLodFactors& f) {
+    const auto valid = [](std::uint16_t value) {
+        return value <= Gameplay::SimulationLodPolicy::MAX_FACTOR;
+    };
+    return valid(f.distance) && valid(f.combat) && valid(f.narrative) &&
+           valid(f.strategic) && valid(f.playerInterest) &&
+           valid(f.mythicImportance);
+}
+
 // Bitcast a u64 counter to/from an int64 wire field (MintOutbox
 // ledger-seal precedent) — bit-exact across platforms.
 std::int64_t ToWire(std::uint64_t v) {
@@ -275,6 +284,53 @@ bool WorldState::SetWarband(std::string_view node,
     return true;
 }
 
+Result<bool> WorldState::SetAgents(
+    const WorldMap& map, std::span<const WorldAgentState> agents) {
+    if (map.Id() != worldId_) {
+        return Gameplay::Fail<bool>("world",
+                                    "agent map does not match state");
+    }
+    if (agents.size() > MAX_AGENTS) {
+        return Gameplay::Fail<bool>("world", "agent count exceeds limit");
+    }
+
+    std::vector<WorldAgentState> next(agents.begin(), agents.end());
+    for (const WorldAgentState& agent : next) {
+        if (!ValidId(agent.publicNode) ||
+            map.FindNode(agent.publicNode) == nullptr) {
+            return Gameplay::Fail<bool>("world",
+                                        "agent public node is unknown");
+        }
+        if (!ValidLodFactors(agent.lodFactors)) {
+            return Gameplay::Fail<bool>("validation",
+                                        "agent LOD factor out of range");
+        }
+    }
+    std::sort(next.begin(), next.end(),
+              [](const WorldAgentState& a, const WorldAgentState& b) {
+                  return a.id < b.id;
+              });
+    for (std::size_t i = 1; i < next.size(); ++i) {
+        if (next[i - 1].id == next[i].id) {
+            return Gameplay::Fail<bool>("duplicate",
+                                        "agent IDs must be unique");
+        }
+    }
+    agents_ = std::move(next);
+    return Gameplay::Ok(true);
+}
+
+Result<std::vector<Gameplay::SimulationLodAssignment>>
+WorldState::PlanAgentLod(const Gameplay::SimulationLodPolicy& policy,
+                         const Gameplay::SimulationBudget& budget) const {
+    std::vector<Gameplay::SimulationLodSubject> subjects;
+    subjects.reserve(agents_.size());
+    for (const WorldAgentState& agent : agents_) {
+        subjects.push_back({agent.id, agent.lodFactors});
+    }
+    return policy.Plan(subjects, budget);
+}
+
 Result<JsonValue> WorldState::ToJson() const {
     JsonValue::Object root;
     root["schema"] = JsonValue::String(std::string(SCHEMA));
@@ -318,6 +374,27 @@ Result<JsonValue> WorldState::ToJson() const {
             s[id] = JsonValue::MakeObject(std::move(jm));
         }
         root["sightings"] = JsonValue::MakeObject(std::move(s));
+    }
+    if (!agents_.empty()) {
+        JsonValue::Array agents;
+        agents.reserve(agents_.size());
+        for (const WorldAgentState& agent : agents_) {
+            JsonValue::Object ja;
+            ja["id"] = JsonValue::Int(ToWire(agent.id));
+            ja["public_node"] = JsonValue::String(agent.publicNode);
+            JsonValue::Object jf;
+            jf["distance"] = JsonValue::Int(agent.lodFactors.distance);
+            jf["combat"] = JsonValue::Int(agent.lodFactors.combat);
+            jf["narrative"] = JsonValue::Int(agent.lodFactors.narrative);
+            jf["strategic"] = JsonValue::Int(agent.lodFactors.strategic);
+            jf["player_interest"] =
+                JsonValue::Int(agent.lodFactors.playerInterest);
+            jf["mythic_importance"] =
+                JsonValue::Int(agent.lodFactors.mythicImportance);
+            ja["lod"] = JsonValue::MakeObject(std::move(jf));
+            agents.push_back(JsonValue::MakeObject(std::move(ja)));
+        }
+        root["agents"] = JsonValue::MakeArray(std::move(agents));
     }
     if (!queue_.empty()) {
         std::vector<WorldEvent> sorted = queue_;
@@ -533,6 +610,62 @@ Result<WorldState> WorldState::FromJson(const JsonValue& doc) {
                     "world", "sighting day/count bad");
             }
             s.sightings_[k] = {d.AsInt(), c.AsInt()};
+        }
+    }
+    if (doc.Has("agents")) {
+        const JsonValue& a = doc["agents"];
+        if (!a.IsArray() || a.Size() > MAX_AGENTS) {
+            return Gameplay::Fail<WorldState>("world", "'agents' bad/over");
+        }
+        s.agents_.reserve(a.Size());
+        for (const JsonValue& ja : a.Items()) {
+            if (!ja.IsObject() || !ja["id"].IsInt()) {
+                return Gameplay::Fail<WorldState>("world",
+                                                  "agent entry/id bad");
+            }
+            const std::string* node = ja.FindString("public_node");
+            const JsonValue& jf = ja["lod"];
+            if (node == nullptr || !ValidId(*node) || !jf.IsObject()) {
+                return Gameplay::Fail<WorldState>("world",
+                                                  "agent node/LOD missing");
+            }
+            const auto readFactor = [&jf](std::string_view key,
+                                          std::uint16_t& out) {
+                const JsonValue& value = jf[key];
+                const std::int64_t raw = value.AsInt();
+                if (!value.IsInt() || raw < 0 ||
+                    raw > Gameplay::SimulationLodPolicy::MAX_FACTOR) {
+                    return false;
+                }
+                out = static_cast<std::uint16_t>(raw);
+                return true;
+            };
+            WorldAgentState agent;
+            agent.id = FromWire(ja["id"].AsInt());
+            agent.publicNode = *node;
+            if (!readFactor("distance", agent.lodFactors.distance) ||
+                !readFactor("combat", agent.lodFactors.combat) ||
+                !readFactor("narrative", agent.lodFactors.narrative) ||
+                !readFactor("strategic", agent.lodFactors.strategic) ||
+                !readFactor("player_interest",
+                            agent.lodFactors.playerInterest) ||
+                !readFactor("mythic_importance",
+                            agent.lodFactors.mythicImportance)) {
+                return Gameplay::Fail<WorldState>("world",
+                                                  "agent LOD factor bad");
+            }
+            s.agents_.push_back(std::move(agent));
+        }
+        std::sort(s.agents_.begin(), s.agents_.end(),
+                  [](const WorldAgentState& left,
+                     const WorldAgentState& right) {
+                      return left.id < right.id;
+                  });
+        for (std::size_t i = 1; i < s.agents_.size(); ++i) {
+            if (s.agents_[i - 1].id == s.agents_[i].id) {
+                return Gameplay::Fail<WorldState>("duplicate",
+                                                  "agent IDs must be unique");
+            }
         }
     }
     return Gameplay::Ok(std::move(s));
