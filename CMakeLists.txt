@@ -737,6 +737,12 @@ target_include_directories(potato_test_sprite_animation PRIVATE ${CMAKE_SOURCE_D
 target_link_libraries(potato_test_sprite_animation PotatoGame)
 add_test(NAME potato_test_sprite_animation COMMAND potato_test_sprite_animation)
 
+add_executable(potato_test_framebuffer_clipping
+    Examples/MingGoRTS/potato_test_framebuffer_clipping.cpp)
+target_include_directories(potato_test_framebuffer_clipping PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(potato_test_framebuffer_clipping PotatoGame)
+add_test(NAME potato_test_framebuffer_clipping COMMAND potato_test_framebuffer_clipping)
+
 # Story 12.9 — overworld view / order menu / creation form
 add_executable(potato_test_overworld Examples/potato_test_overworld.cpp)
 target_include_directories(potato_test_overworld PRIVATE ${CMAKE_SOURCE_DIR})
