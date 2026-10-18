@@ -64,6 +64,10 @@ int main() {
     Check(map.RegionCount() == 36, "fixture has enough regions to build grid");
     const auto projection = Potato::Game::MapProjection::Build(map, 100, 60, 24);
     Check(projection.ok(), "projection builds indexed region centers");
+    Check(!Potato::Game::MapProjection::Build(
+               map, 100, 60, std::numeric_limits<int>::max())
+               .ok(),
+          "margin too large for view rejects without integer overflow");
     if (projection.ok()) {
         Check(projection.value.At(1).x == 31 &&
                   projection.value.At(2).x == 33,
