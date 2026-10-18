@@ -3,7 +3,9 @@
 #include "Gameplay/Result.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <utility>
+#include <unordered_map>
 #include <vector>
 
 namespace Potato::Gameplay { class BattleMap; }
@@ -57,6 +59,10 @@ public:
 private:
     std::vector<ProjectedRegion> regions_;
     std::vector<std::pair<std::size_t, std::size_t>> edges_;
+    // Uniform-grid broadphase for pixel hit tests, inspired by
+    // StonePotatoes/src/ai/SpatialGrid.h. This presentation-only index uses
+    // integer screen coordinates and stores region indices in canonical order.
+    std::unordered_map<std::uint64_t, std::vector<std::size_t>> hitCells_;
     bool hinted_ = false;
 };
 

@@ -36,6 +36,7 @@ docs/
 - **[GAME_UI_UX_DESIGN.md](./architecture/GAME_UI_UX_DESIGN.md)** — 遊戲主畫面 UI/UX 設計規劃(完整畫面流程 S0–S4 + Epic 13 工項拆解)
 
 - **[SIMULATION_LOD.md](./architecture/SIMULATION_LOD.md)** — Deterministic hierarchical simulation LOD policy and implementation plan
+- **[SPATIAL_HIT_TESTING.md](./architecture/SPATIAL_HIT_TESTING.md)** — StonePotatoes uniform-grid technique adapted for deterministic map hit testing
 
 ## 📜 敘事 (narrative/)
 
