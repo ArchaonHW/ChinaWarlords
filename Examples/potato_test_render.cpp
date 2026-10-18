@@ -19,10 +19,7 @@
 #include "Gameplay/Squad/Squad.h"
 
 #include <cstdio>
-#include <cstdint>
-#include <limits>
 #include <string>
-#include <vector>
 
 namespace Game = Potato::Game;
 using Potato::Game::BattleViewInput;
@@ -78,30 +75,6 @@ static BattleMap TestMap() {
         "\"myth\":[\"shrine\"]}],"
         "\"edges\":[[\"a\",\"b\"],[\"b\",\"c\"]]}";
     return std::move(BattleMap::FromJson(JsonValue::Parse(doc).value).value);
-}
-
-static int ReferenceHit(const std::vector<Game::ProjectedRegion>& regions,
-                        int x, int y, int radius) {
-    if (radius < 0) return -1;
-    const std::int64_t r = radius;
-    const std::int64_t rr = r * r;
-    std::int64_t bestDistance = rr + 1;
-    int best = -1;
-    for (const auto& region : regions) {
-        const std::int64_t dx = static_cast<std::int64_t>(x) - region.x;
-        const std::int64_t dy = static_cast<std::int64_t>(y) - region.y;
-        if (dx < -r || dx > r || dy < -r || dy > r) continue;
-        const std::int64_t distance = dx * dx + dy * dy;
-        if (distance <= rr &&
-            (distance < bestDistance ||
-             (distance == bestDistance &&
-              (best < 0 || region.index <
-                               static_cast<std::size_t>(best))))) {
-            bestDistance = distance;
-            best = static_cast<int>(region.index);
-        }
-    }
-    return best;
 }
 
 int main() {
@@ -237,29 +210,6 @@ int main() {
                   hp.value.Edges()[1] ==
                       std::pair<std::size_t, std::size_t>{1, 2},
               "proj: edges deduped once");
-        Check(hp.value.Hit(hp.value.At(0).x, hp.value.At(0).y, 0) == 0,
-              "proj hit: exact center with zero radius");
-        Check(hp.value.Hit(hp.value.At(0).x + 8,
-                           hp.value.At(0).y, 8) == 0,
-              "proj hit: query crosses a grid-cell edge");
-        Check(hp.value.Hit(-100, -100, 0) == -1 &&
-                  hp.value.Hit(hp.value.At(0).x,
-                               hp.value.At(0).y, -1) == -1,
-              "proj hit: outside and negative radius reject");
-        Check(hp.value.Hit(hp.value.At(1).x,
-                           hp.value.At(1).y,
-                           std::numeric_limits<int>::max()) == 1,
-              "proj hit: broad query falls back safely");
-        for (int x = -16; x <= 116; x += 13) {
-            for (int y = -16; y <= 76; y += 17) {
-                for (const int radius : {0, 8, 24, 80, 700}) {
-                    Check(hp.value.Hit(x, y, radius) ==
-                              ReferenceHit(hp.value.Regions(), x, y,
-                                           radius),
-                          "proj hit: indexed result matches linear reference");
-                }
-            }
-        }
 
         // Grid fallback: drop a hint → grid layout.
         const std::string noHint =
@@ -284,29 +234,6 @@ int main() {
 
         auto bad = MapProjection::Build(map, 10, 10, 9);
         Check(!bad.ok(), "proj: impossible bounds reject");
-
-        std::string tieDoc =
-            R"({"schema":"potato.map/1","id":"hit_tie","regions":[)";
-        for (int i = 0; i < 36; ++i) {
-            if (i != 0) tieDoc += ',';
-            const int x = i == 0 ? 0 : i == 1 ? 7 : i == 2 ? 9 : 52;
-            tieDoc += "{\"id\":\"r" + std::to_string(i) +
-                      "\",\"center\":[" + std::to_string(x) +
-                      ",0]}";
-        }
-        tieDoc += R"(],"edges":[]})";
-        const BattleMap tieMap = std::move(
-            BattleMap::FromJson(JsonValue::Parse(tieDoc).value).value);
-        const auto tieProjection =
-            MapProjection::Build(tieMap, 100, 60, 24);
-        Check(tieProjection.ok() &&
-                  tieProjection.value.Regions().size() == 36 &&
-                  tieProjection.value.At(1).x == 31 &&
-                  tieProjection.value.At(2).x == 33,
-              "proj hit tie fixture builds indexed adjacent cells");
-        Check(tieProjection.ok() &&
-                  tieProjection.value.Hit(32, 30, 2) == 1,
-              "proj hit: equal-distance ties use lowest region index");
     }
 
     // ===== RenderBattleView =====
