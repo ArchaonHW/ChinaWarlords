@@ -76,7 +76,7 @@ nearest-blit)。
 
 ### S0 標題畫面
 
-- 中央:「民國史詩」標題 + 副標;背景用 `RenderOverworld` 渲染最後存檔
+- 中央:「ChinaWarlords／民國史詩（暫定）」標題 + 副標;背景用 `RenderOverworld` 渲染最後存檔
   (或 demo world)作為環境底圖——進遊戲第一眼就是這個世界。
 - 選單:**繼續戰役**(列出 `SaveSystem::ListSlots()`,顯示指揮官名/天
   數,空槽 disabled)、**新戰役**、**設定**、**離開**。
@@ -183,4 +183,4 @@ framebuffer,讓 chrome 也 deterministic)、戰鬥覆盤 replay viewer、鍵盤/
 
 ---
 
-**🥔 MingGoRTS 文檔**
+**🥔 ChinaWarlords（民國史詩，中文名暫定）文檔**

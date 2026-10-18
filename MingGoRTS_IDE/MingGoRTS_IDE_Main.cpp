@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
     IDEConfig config;
     // --workspace <dir> / MINGGORTS_WORKSPACE / exe-relative repo root
     config.workspacePath = ResolveWorkspacePath(argc, argv);
-    config.projectName = "MingGoRTS Game Project";
+    config.projectName = "ChinaWarlords (民國史詩)";
     config.enginePath = config.workspacePath;
     config.enableAIAssistance = true;
     config.enableAutocompletion = true;

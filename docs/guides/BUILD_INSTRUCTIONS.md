@@ -1,4 +1,4 @@
-# Potato Engine 建置說明
+# ChinaWarlords / Potato Engine 建置說明
 
 ## 🚀 快速建置指南
 
@@ -29,7 +29,7 @@
 2. **建置步驟**
    ```batch
    # 打開 Visual Studio Developer Command Prompt
-   cd MingGoRTS
+   cd ChinaWarlords
    mkdir build && cd build
    cmake .. -G "Visual Studio 17 2022" -A x64
    cmake --build . --config Release
@@ -51,7 +51,7 @@ sudo apt-get install libglfw3-dev libgl1-mesa-dev
 sudo apt-get install libopenal-dev libbullet-dev
 
 # 建置
-cd MingGoRTS
+cd ChinaWarlords
 mkdir build && cd build
 cmake ..
 cmake --build . --config Release
@@ -68,7 +68,7 @@ cd bin
 brew install cmake glfw openal-soft bullet
 
 # 建置
-cd MingGoRTS
+cd ChinaWarlords
 mkdir build && cd build
 cmake ..
 cmake --build . --config Release
