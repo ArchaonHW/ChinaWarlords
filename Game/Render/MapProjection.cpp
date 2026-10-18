@@ -37,12 +37,14 @@ using Gameplay::Result;
 Result<MapProjection>
 MapProjection::Build(const BattleMap& map, int w, int h,
                      int margin) {
+    const std::int64_t twiceMargin =
+        static_cast<std::int64_t>(margin) * 2;
     if (map.RegionCount() == 0) {
         return Gameplay::Fail<MapProjection>(
             "projection", "map has no regions");
     }
-    if (w <= 0 || h <= 0 || margin < 0 || margin * 2 >= w ||
-        margin * 2 >= h) {
+    if (w <= 0 || h <= 0 || margin < 0 || twiceMargin >= w ||
+        twiceMargin >= h) {
         return Gameplay::Fail<MapProjection>(
             "projection", "view bounds too small");
     }
