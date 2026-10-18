@@ -63,3 +63,8 @@ C++20 game engine (PotatoEngine) + greenfield game layer (MingGoRTS). Planning a
 - `AI/AgentChain` gained real dispatch: Tool nodes via `SetToolRegistry`, condition/loop/parallel subroutine nodes (`{var}` placeholders), `AgentGraph` topological exec, `intermediateResults` on ChainResult.
 - `MathUtils/RiemannZeta.h` (`Potato::RZ`) is the shared ζ/L numerical core for `RiemannExplorerTest` (rewritten) and `RiemannExplorer2Test`; `AI/ZetaAgentTools` exposes it to agents via ToolFramework (`ZetaAgentToolsTest`). All engine tests are ctest-registered under `POTATO_TESTS`.
 - Known environmental issue: `gameplay_dep_guard` CTest fails "Process not started" spawning powershell.exe despite RemoteSigned being set — script itself passes when run directly; suspected pending VS-installer reboot. Re-check after reboot.
+
+## Product identity
+
+- The game's English name is ChinaWarlords; its provisional Chinese name is 民國史詩.
+- MingGoRTS is the former repository slug and remains a legacy technical identifier. Keep existing paths, namespaces, and build target names stable unless a separate migration is requested.

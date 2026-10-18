@@ -1,4 +1,6 @@
-# MingGoRTS 文檔索引
+# ChinaWarlords（民國史詩，中文名暫定）文檔索引
+
+專案名稱與既有技術識別方式詳見[專案名稱說明](./PROJECT_IDENTITY.md)。
 
 ~~~
 docs/
@@ -11,6 +13,10 @@ docs/
 ├── research/         # 研究文檔
 └── archive/          # 歷史完成報告(已整合)
 ~~~
+
+## ℹ️ 專案
+
+- **[PROJECT_IDENTITY.md](./PROJECT_IDENTITY.md)** — 專案中英文名稱與既有技術識別的使用規則
 
 ## 📚 指南 (guides/)
 
@@ -52,9 +58,9 @@ docs/
 ## 🔗 相關鏈接
 
 - [主 README](../README.md)
-- [GitHub 倉庫](https://github.com/ArchaonHW/MingGoRTS.git)
-- [問題報告](https://github.com/ArchaonHW/MingGoRTS/issues)
+- [GitHub 倉庫](https://github.com/ArchaonHW/ChinaWarlords)
+- [問題報告](https://github.com/ArchaonHW/ChinaWarlords/issues)
 
 ---
 
-**🥔 MingGoRTS 文檔索引** — 最後更新:2026-10-15
+**🥔 ChinaWarlords（民國史詩，中文名暫定）文檔索引** — 最後更新:2026-10-18

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # sync-potatoengine-upstream.sh <upstream-checkout-dir>
 #
-# Copies the canonical engine modules from THIS repo (MingGoRTS —
+# Copies the canonical engine modules from THIS repo (ChinaWarlords —
 # source of truth) into a PotatoEngine upstream checkout. The
 # upstream-mirror workflow runs this and fails if the mirror drifts.
 #

@@ -16,7 +16,7 @@ namespace Potato::Game {
 // is the pure, headless-testable widget model (hit rects + enabled
 // flags); the shell paints it and maps hits to actions.
 //
-//   ┌──────────── 民國史詩 ────────────┐
+//   ┌── ChinaWarlords · 民國史詩 ──────┐
 //   │        (masthead band)          │
 //   ├──────────────────────────────────┤
 //   │  繼續戰役        (disabled when  │
