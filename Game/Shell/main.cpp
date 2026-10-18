@@ -161,7 +161,7 @@ int main() {
     }
 
     Game::GlShell shell;
-    if (!shell.Init(960, 600, "MingGoRTS — 民國史詩")) {
+    if (!shell.Init(960, 600, "ChinaWarlords — 民國史詩")) {
         std::fprintf(stderr, "shell init failed\n");
         return 1;
     }
@@ -286,6 +286,8 @@ int main() {
             ImGui::SetNextWindowSize({960, 600});
             ImGui::Begin("##title", nullptr,
                          ImGuiWindowFlags_NoDecoration);
+            ImGui::SetCursorPos({410, 112});
+            ImGui::TextDisabled("ChinaWarlords");
             ImGui::SetCursorPos({330, 140});
             ImGui::Text("民 國 史 詩");
             ImGui::SetCursorPos({360, 170});

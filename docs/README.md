@@ -1,4 +1,6 @@
-# MingGoRTS / Potato Engine 文檔
+# ChinaWarlords（民國史詩，中文名暫定）/ Potato Engine 文檔
+
+專案名稱與既有技術識別方式詳見[專案名稱說明](./PROJECT_IDENTITY.md)。
 
 ## 📚 文檔索引
 
@@ -35,9 +37,9 @@
 ## 🔗 相關鏈接
 
 - [主 README](../README.md)
-- [GitHub 倉庫](https://github.com/ArchaonHW/MingGoRTS.git)
-- [問題報告](https://github.com/ArchaonHW/MingGoRTS/issues)
+- [GitHub 倉庫](https://github.com/ArchaonHW/ChinaWarlords)
+- [問題報告](https://github.com/ArchaonHW/ChinaWarlords/issues)
 
 ---
 
-**🥔 MingGoRTS 文檔**
+**🥔 ChinaWarlords（民國史詩，中文名暫定）文檔**

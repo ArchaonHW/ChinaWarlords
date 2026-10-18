@@ -1,6 +1,9 @@
-# MingGoRTS（民國史詩 RTS）
+# ChinaWarlords（民國史詩，中文名暫定）
 
 **回合制 RPG × 即時戰略的 hybrid 戰術遊戲，執行於自研 PotatoEngine（C++20）**
+
+英文名稱：**ChinaWarlords** · 中文名稱：**民國史詩（暫定）**。`MingGoRTS`
+是舊 GitHub 倉庫名稱與部分沿用中的技術識別；產品名稱以本節為準。
 
 玩家在戰鬥中不點選單位——而是**書寫**單位。每場戰鬥前編排 doctrine 卡
 （trigger → condition → action）、部署具名小隊，然後看雙方腳本即時執行，
@@ -39,7 +42,7 @@ tile blit 先裁到可見畫面範圍，動畫則由明確整數 tick 推進，�
 ### 目錄
 
 ```
-MingGoRTS/
+ChinaWarlords/
 ├── Core/ Rendering/ Physics/ Audio/ Input/   # PotatoEngine 子系統
 ├── Resources/ ECS/ GameObject/ Events/
 ├── FileSystem/ Logging/ MathUtils/ Memory/
@@ -148,6 +151,7 @@ ctest -C Release --output-on-failure
 ## 文件索引
 
 - [docs/](docs/index.md)——引擎指南、架構、研究報告
+- [專案名稱與識別](docs/PROJECT_IDENTITY.md)——中英文名稱與沿用中的技術識別
 - [技術基線](docs/architecture/TECHNICAL_BASELINE.md)——目前已驗證的技術與依賴邊界；舊版引擎概覽中的方向性方案不代表已採用
 
 以下規劃產物為**本地開發文件**（`_bmad-output/` 刻意不進版控，
@@ -161,7 +165,7 @@ clone 後不會出現；僅供持有該目錄的開發環境參考）：
 
 ---
 
-**MingGoRTS — 以筆代兵，以治為勝**
+**ChinaWarlords · 民國史詩 — 以筆代兵，以治為勝**
 
 *狀態：實作進行中 · 四層架構（Engine/Gameplay/Campaign/Game）已落地 ·
 44 項 CTest 已註冊（含 headless 玩法測試）· CI（syntax/security/build/ctest/mirror）運作中*

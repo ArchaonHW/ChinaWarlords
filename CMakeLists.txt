@@ -1,7 +1,7 @@
-# Potato Engine - CMake 建置配置
+# ChinaWarlords + Potato Engine - CMake 建置配置
 
 cmake_minimum_required(VERSION 3.15)
-project(PotatoEngine VERSION 1.0.0 LANGUAGES CXX)
+project(ChinaWarlords VERSION 1.0.0 LANGUAGES CXX)
 
 # 設置 C++ 標準
 set(CMAKE_CXX_STANDARD 20)
@@ -490,7 +490,7 @@ set_target_properties(FakeCheatModule PROPERTIES OUTPUT_NAME "FakeCheat" PREFIX 
 # add_executable(AIAgentGUIExample Examples/AIAgentGUIExample.cpp)
 # target_link_libraries(AIAgentGUIExample PotatoEngine)
 
-# ==== MingGoRTS 遊戲層 ====
+# ==== ChinaWarlords 遊戲層（民國史詩，中文名暫定） ====
 # Gameplay：純模擬函式庫——headless、無 Rendering/GUI/Platform-GL 依賴
 # （禁入清單由 scripts/CheckGameplayDeps.ps1 檢查）
 file(GLOB_RECURSE GAMEPLAY_SOURCES CONFIGURE_DEPENDS "Gameplay/*.cpp")
