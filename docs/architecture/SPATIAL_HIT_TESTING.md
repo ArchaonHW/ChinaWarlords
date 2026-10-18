@@ -16,5 +16,5 @@ cause an unbounded cell walk.
 
 This index belongs to `Game/Render`, where coordinates are presentation pixels.
 It does not affect `Gameplay` state, AI visibility, battle ticks, replay, or
-save data. The headless overworld test compares indexed results to a linear
-reference scan and covers cell-boundary ties and broad queries.
+save data. A dedicated headless Game-layer test compares indexed results to a
+linear reference scan and covers cell-boundary ties and broad queries.
