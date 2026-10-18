@@ -138,8 +138,10 @@ or change replay behavior. Record results alongside the CPU and build
 configuration before selecting a CPU compute budget. Only add GPU/NPU paths
 after parity and replay behavior are specified.
 
-Next, connect snapshots to live world ticks only after the scheduler and
-public-versus-hidden state boundaries are tested end to end.
+Before connecting snapshots to live world ticks, resolve the transition,
+clock, replay, and visibility rules in
+[`SIMULATION_LOD_LIFECYCLE.md`](SIMULATION_LOD_LIFECYCLE.md), then add headless
+end-to-end tests for the supported transitions.
 
 The unit test also plans the specification's mixed scale of 100 FULL and
 100,000 ABSTRACT entities. This verifies classification and allocation
