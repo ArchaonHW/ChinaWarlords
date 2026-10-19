@@ -70,6 +70,45 @@ std::uint64_t ScaleFraction(std::uint64_t numerator,
     return quotient;
 }
 
+std::uint64_t ScaleRatio(std::uint64_t numerator,
+                         std::uint64_t multiplier,
+                         std::uint64_t denominator) {
+    // Splitting the whole part keeps ScaleFraction's numerator bounded by
+    // the denominator even when the coordinate span exceeds it.
+    const std::uint64_t whole = numerator / denominator;
+    const std::uint64_t remainder = numerator % denominator;
+    return whole * multiplier +
+           ScaleFraction(remainder, multiplier, denominator);
+}
+
+struct WideProduct {
+    std::uint64_t high;
+    std::uint64_t low;
+};
+
+// Preserve the full product of an int64 coordinate span and an int-sized
+// viewport extent without relying on compiler-specific 128-bit integers.
+WideProduct MultiplyByViewExtent(std::uint64_t value,
+                                 std::uint32_t extent) {
+    const std::uint64_t lowProduct =
+        (value & 0xffffffffu) * extent;
+    const std::uint64_t highProduct = (value >> 32) * extent;
+    const std::uint64_t shiftedHigh = highProduct << 32;
+    const std::uint64_t low = lowProduct + shiftedHigh;
+    return { (highProduct >> 32) + (low < lowProduct ? 1u : 0u), low };
+}
+
+int CompareAspectProducts(std::uint32_t width, std::uint64_t spanY,
+                          std::uint32_t height, std::uint64_t spanX) {
+    const WideProduct widthTimesY = MultiplyByViewExtent(spanY, width);
+    const WideProduct heightTimesX = MultiplyByViewExtent(spanX, height);
+    if (widthTimesY.high != heightTimesX.high) {
+        return widthTimesY.high < heightTimesX.high ? -1 : 1;
+    }
+    if (widthTimesY.low == heightTimesX.low) return 0;
+    return widthTimesY.low < heightTimesX.low ? -1 : 1;
+}
+
 } // namespace
 
 using Gameplay::BattleMap;
@@ -118,6 +157,23 @@ MapProjection::Build(const BattleMap& map, int w, int h,
                             spanY = OrderedDistance(maxY, minY);
         const std::int64_t boxW = w - 2 * margin,
                            boxH = h - 2 * margin;
+        std::uint64_t renderW = spanX == 0 ? 0 : boxW;
+        std::uint64_t renderH = spanY == 0 ? 0 : boxH;
+        if (spanX != 0 && spanY != 0) {
+            if (CompareAspectProducts(
+                    static_cast<std::uint32_t>(boxW), spanY,
+                    static_cast<std::uint32_t>(boxH), spanX) <= 0) {
+                renderH = ScaleRatio(
+                    spanY, static_cast<std::uint64_t>(boxW), spanX);
+            } else {
+                renderW = ScaleRatio(
+                    spanX, static_cast<std::uint64_t>(boxH), spanY);
+            }
+        }
+        const std::int64_t originX =
+            margin + (boxW - static_cast<std::int64_t>(renderW)) / 2;
+        const std::int64_t originY =
+            margin + (boxH - static_cast<std::int64_t>(renderH)) / 2;
         for (std::size_t i = 0; i < n; ++i) {
             const auto& r = map.RegionAt(i);
             auto& pr = p.regions_[i];
@@ -125,14 +181,12 @@ MapProjection::Build(const BattleMap& map, int w, int h,
             // Degenerate span → center on that axis.
             pr.x = spanX == 0
                 ? w / 2
-                : margin + static_cast<int>(ScaleFraction(
-                      OrderedDistance(r.centerX, minX),
-                      static_cast<std::uint64_t>(boxW), spanX));
+                : static_cast<int>(originX + ScaleRatio(
+                      OrderedDistance(r.centerX, minX), renderW, spanX));
             pr.y = spanY == 0
                 ? h / 2
-                : margin + static_cast<int>(ScaleFraction(
-                      OrderedDistance(r.centerY, minY),
-                      static_cast<std::uint64_t>(boxH), spanY));
+                : static_cast<int>(originY + ScaleRatio(
+                      OrderedDistance(r.centerY, minY), renderH, spanY));
         }
     } else {
         // Index-ordered grid: cols = ceil(sqrt(n)).

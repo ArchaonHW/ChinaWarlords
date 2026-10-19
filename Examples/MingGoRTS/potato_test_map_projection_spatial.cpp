@@ -52,6 +52,48 @@ Potato::Gameplay::BattleMap MakeExtremeHintMap() {
     return result.ok() ? result.value : Potato::Gameplay::BattleMap{};
 }
 
+Potato::Gameplay::BattleMap MakeWideAspectHintMap() {
+    const auto parsed = Potato::Gameplay::JsonValue::Parse(
+        R"json({
+            "schema":"potato.map/1","id":"wide_aspect_hints",
+            "regions":[{"id":"left","center":[0,0]},
+                       {"id":"middle","center":[50,5]},
+                       {"id":"right","center":[100,10]}],
+            "edges":[]})json");
+    if (!parsed.ok()) return {};
+    const auto result = Potato::Gameplay::BattleMap::FromJson(parsed.value);
+    return result.ok() ? result.value : Potato::Gameplay::BattleMap{};
+}
+
+Potato::Gameplay::BattleMap MakeTallAspectHintMap() {
+    const auto parsed = Potato::Gameplay::JsonValue::Parse(
+        R"json({
+            "schema":"potato.map/1","id":"tall_aspect_hints",
+            "regions":[{"id":"top","center":[0,0]},
+                       {"id":"middle","center":[5,50]},
+                       {"id":"bottom","center":[10,100]}],
+            "edges":[]})json");
+    if (!parsed.ok()) return {};
+    const auto result = Potato::Gameplay::BattleMap::FromJson(parsed.value);
+    return result.ok() ? result.value : Potato::Gameplay::BattleMap{};
+}
+
+Potato::Gameplay::BattleMap MakeSquareExtremeHintMap() {
+    const std::int64_t min = std::numeric_limits<std::int64_t>::min();
+    const std::string doc =
+        "{\"schema\":\"potato.map/1\",\"id\":\"square_extreme_hints\",\"regions\":["
+        "{\"id\":\"min\",\"center\":[" + std::to_string(min) + "," +
+        std::to_string(min) + "]},{\"id\":\"middle\",\"center\":[0,0]},"
+        "{\"id\":\"max\",\"center\":[" +
+        std::to_string(std::numeric_limits<std::int64_t>::max()) + "," +
+        std::to_string(std::numeric_limits<std::int64_t>::max()) +
+        "]}],\"edges\":[]}";
+    const auto parsed = Potato::Gameplay::JsonValue::Parse(doc);
+    if (!parsed.ok()) return {};
+    const auto result = Potato::Gameplay::BattleMap::FromJson(parsed.value);
+    return result.ok() ? result.value : Potato::Gameplay::BattleMap{};
+}
+
 int ReferenceHit(const std::vector<Potato::Game::ProjectedRegion>& regions,
                  int x, int y, int radius) {
     if (radius < 0) return -1;
@@ -79,6 +121,43 @@ int ReferenceHit(const std::vector<Potato::Game::ProjectedRegion>& regions,
 } // namespace
 
 int main() {
+    const auto wideMap = MakeWideAspectHintMap();
+    const auto wideProjection =
+        Potato::Game::MapProjection::Build(wideMap, 100, 60, 2);
+    Check(wideProjection.ok(), "wide hint map projection builds");
+    if (wideProjection.ok()) {
+        const auto& projected = wideProjection.value;
+        Check(projected.At(0).x == 2 && projected.At(1).x == 50 &&
+                  projected.At(2).x == 98 && projected.At(0).y == 25 &&
+                  projected.At(1).y == 29 && projected.At(2).y == 34,
+              "hint projection preserves aspect ratio and centers unused height");
+    }
+
+    const auto tallMap = MakeTallAspectHintMap();
+    const auto tallProjection =
+        Potato::Game::MapProjection::Build(tallMap, 100, 60, 2);
+    Check(tallProjection.ok(), "tall hint map projection builds");
+    if (tallProjection.ok()) {
+        const auto& projected = tallProjection.value;
+        Check(projected.At(0).x == 47 && projected.At(1).x == 49 &&
+                  projected.At(2).x == 52 && projected.At(0).y == 2 &&
+                  projected.At(1).y == 30 && projected.At(2).y == 58,
+              "hint projection preserves aspect ratio and centers unused width");
+    }
+
+    const auto squareExtremeMap = MakeSquareExtremeHintMap();
+    const auto squareExtremeProjection =
+        Potato::Game::MapProjection::Build(squareExtremeMap, 100, 60, 2);
+    Check(squareExtremeProjection.ok(),
+          "square full-range hints project without cross-product overflow");
+    if (squareExtremeProjection.ok()) {
+        const auto& projected = squareExtremeProjection.value;
+        Check(projected.At(0).x == 22 && projected.At(0).y == 2 &&
+                  projected.At(1).x == 50 && projected.At(1).y == 30 &&
+                  projected.At(2).x == 78 && projected.At(2).y == 58,
+              "full-range square hints preserve aspect ratio and center");
+    }
+
     const auto extremeMap = MakeExtremeHintMap();
     const auto extremeProjection =
         Potato::Game::MapProjection::Build(extremeMap, 100, 60, 2);
