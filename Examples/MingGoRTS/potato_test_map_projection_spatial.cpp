@@ -33,6 +33,21 @@ Potato::Gameplay::BattleMap MakeMap() {
     return result.ok() ? result.value : Potato::Gameplay::BattleMap{};
 }
 
+Potato::Gameplay::BattleMap MakeExtremeHintMap() {
+    const std::string doc =
+        "{\"schema\":\"potato.map/1\",\"id\":\"extreme_hints\",\"regions\":["
+        "{\"id\":\"min\",\"center\":[" +
+        std::to_string(std::numeric_limits<std::int64_t>::min()) + ",0]},"
+        "{\"id\":\"middle\",\"center\":[0,0]},"
+        "{\"id\":\"max\",\"center\":[" +
+        std::to_string(std::numeric_limits<std::int64_t>::max()) +
+        ",0]}],\"edges\":[]}";
+    const auto parsed = Potato::Gameplay::JsonValue::Parse(doc);
+    if (!parsed.ok()) return {};
+    const auto result = Potato::Gameplay::BattleMap::FromJson(parsed.value);
+    return result.ok() ? result.value : Potato::Gameplay::BattleMap{};
+}
+
 int ReferenceHit(const std::vector<Potato::Game::ProjectedRegion>& regions,
                  int x, int y, int radius) {
     if (radius < 0) return -1;
@@ -60,6 +75,18 @@ int ReferenceHit(const std::vector<Potato::Game::ProjectedRegion>& regions,
 } // namespace
 
 int main() {
+    const auto extremeMap = MakeExtremeHintMap();
+    const auto extremeProjection =
+        Potato::Game::MapProjection::Build(extremeMap, 100, 60, 2);
+    Check(extremeProjection.ok(),
+          "full-range integer map hints project safely");
+    if (extremeProjection.ok()) {
+        Check(extremeProjection.value.At(0).x == 2 &&
+                  extremeProjection.value.At(1).x == 50 &&
+                  extremeProjection.value.At(2).x == 98,
+              "full-range hint span maps endpoints and midpoint deterministically");
+    }
+
     const Potato::Gameplay::BattleMap map = MakeMap();
     Check(map.RegionCount() == 36, "fixture has enough regions to build grid");
     const auto projection = Potato::Game::MapProjection::Build(map, 100, 60, 24);
