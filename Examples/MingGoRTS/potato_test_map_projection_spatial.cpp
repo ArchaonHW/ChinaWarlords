@@ -34,11 +34,15 @@ Potato::Gameplay::BattleMap MakeMap() {
 }
 
 Potato::Gameplay::BattleMap MakeExtremeHintMap() {
+    const std::int64_t min = std::numeric_limits<std::int64_t>::min();
     const std::string doc =
         "{\"schema\":\"potato.map/1\",\"id\":\"extreme_hints\",\"regions\":["
-        "{\"id\":\"min\",\"center\":[" +
-        std::to_string(std::numeric_limits<std::int64_t>::min()) + ",0]},"
+        "{\"id\":\"min\",\"center\":[" + std::to_string(min) + ",0]},"
+        "{\"id\":\"quarter\",\"center\":[" +
+        std::to_string(min / 2 - 1) + ",0]},"
         "{\"id\":\"middle\",\"center\":[0,0]},"
+        "{\"id\":\"three_quarters\",\"center\":[" +
+        std::to_string(std::numeric_limits<std::int64_t>::max() / 2) + ",0]},"
         "{\"id\":\"max\",\"center\":[" +
         std::to_string(std::numeric_limits<std::int64_t>::max()) +
         ",0]}],\"edges\":[]}";
@@ -81,10 +85,11 @@ int main() {
     Check(extremeProjection.ok(),
           "full-range integer map hints project safely");
     if (extremeProjection.ok()) {
-        Check(extremeProjection.value.At(0).x == 2 &&
-                  extremeProjection.value.At(1).x == 50 &&
-                  extremeProjection.value.At(2).x == 98,
-              "full-range hint span maps endpoints and midpoint deterministically");
+        const auto& projected = extremeProjection.value;
+        Check(projected.At(0).x == 2 && projected.At(1).x == 25 &&
+                  projected.At(2).x == 50 && projected.At(3).x == 73 &&
+                  projected.At(4).x == 98,
+              "full-range hints map fractional boundaries with integer-floor rounding");
     }
 
     const Potato::Gameplay::BattleMap map = MakeMap();
