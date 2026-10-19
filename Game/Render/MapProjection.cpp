@@ -29,6 +29,47 @@ std::uint64_t CellKey(std::int64_t x, std::int64_t y) {
     return (static_cast<std::uint64_t>(ux) << 32) | uy;
 }
 
+std::uint64_t OrderedDistance(std::int64_t high, std::int64_t low) {
+    return static_cast<std::uint64_t>(high) -
+           static_cast<std::uint64_t>(low);
+}
+
+// Computes floor(numerator * multiplier / denominator) without a wider
+// integer type. The projection inputs guarantee numerator <= denominator
+// and multiplier <= INT_MAX, so the result is bounded by multiplier.
+std::uint64_t ScaleFraction(std::uint64_t numerator,
+                            std::uint64_t multiplier,
+                            std::uint64_t denominator) {
+    if (numerator == denominator) return multiplier;
+
+    std::uint64_t quotient = 0;
+    std::uint64_t remainder = 0;
+    for (int bit = 63; bit >= 0; --bit) {
+        quotient *= 2;
+
+        std::uint64_t carry = 0;
+        const std::uint64_t remainderComplement = denominator - remainder;
+        if (remainder >= remainderComplement) {
+            remainder -= remainderComplement;
+            ++carry;
+        } else {
+            remainder += remainder;
+        }
+
+        if (((multiplier >> bit) & 1u) != 0) {
+            const std::uint64_t numeratorComplement = denominator - numerator;
+            if (remainder >= numeratorComplement) {
+                remainder -= numeratorComplement;
+                ++carry;
+            } else {
+                remainder += numerator;
+            }
+        }
+        quotient += carry;
+    }
+    return quotient;
+}
+
 } // namespace
 
 using Gameplay::BattleMap;
@@ -73,8 +114,8 @@ MapProjection::Build(const BattleMap& map, int w, int h,
             minY = std::min(minY, r.centerY);
             maxY = std::max(maxY, r.centerY);
         }
-        const std::int64_t spanX = maxX - minX,
-                           spanY = maxY - minY;
+        const std::uint64_t spanX = OrderedDistance(maxX, minX),
+                            spanY = OrderedDistance(maxY, minY);
         const std::int64_t boxW = w - 2 * margin,
                            boxH = h - 2 * margin;
         for (std::size_t i = 0; i < n; ++i) {
@@ -84,12 +125,14 @@ MapProjection::Build(const BattleMap& map, int w, int h,
             // Degenerate span → center on that axis.
             pr.x = spanX == 0
                 ? w / 2
-                : margin + static_cast<int>(
-                      (r.centerX - minX) * boxW / spanX);
+                : margin + static_cast<int>(ScaleFraction(
+                      OrderedDistance(r.centerX, minX),
+                      static_cast<std::uint64_t>(boxW), spanX));
             pr.y = spanY == 0
                 ? h / 2
-                : margin + static_cast<int>(
-                      (r.centerY - minY) * boxH / spanY);
+                : margin + static_cast<int>(ScaleFraction(
+                      OrderedDistance(r.centerY, minY),
+                      static_cast<std::uint64_t>(boxH), spanY));
         }
     } else {
         // Index-ordered grid: cols = ceil(sqrt(n)).
