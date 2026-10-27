@@ -36,6 +36,10 @@ struct MarchPlan {
     std::int64_t supply = 0; // days * rules.supplyPerDay
 };
 
+// Compute one route's supply cost without overflowing or admitting a
+// charge that the append-only ledger cannot record.
+Gameplay::Result<std::int64_t> CalculateMarchSupplyCost(
+    std::int64_t days, const MarchRules& rules);
 // Issue a march order. Reject-before-mutate order: adjacency →
 // already-marching → affordability → Post → Enqueue → in-flight
 // marker. Any failure leaves ledger and state untouched.
