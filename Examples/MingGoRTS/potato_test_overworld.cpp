@@ -37,6 +37,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <set>
 #include <string>
 
@@ -359,6 +360,74 @@ int main() {
               "ordermenu: empty while marching");
     }
 
+    // StonePotatoes logistics configs reject invalid rates at the boundary.
+    {
+        WorldState s = WorldState::Init(w, 42).value;
+        const auto negativeOptions = MarchOptions(
+            w, s, Ledger::MAX_AMOUNT,
+            Potato::Campaign::MarchRules{-1});
+        Check(negativeOptions.empty(),
+              "ordermenu: negative daily supply rate has no options");
+
+        const Potato::Campaign::MarchRules nearCap{
+            Ledger::MAX_AMOUNT / 2 + 1};
+        const auto cappedOptions = MarchOptions(
+            w, s, Ledger::MAX_AMOUNT, nearCap);
+        Check(cappedOptions.size() == 1 &&
+                  cappedOptions[0].nodeId == "d" &&
+                  cappedOptions[0].supply == nearCap.supplyPerDay &&
+                  cappedOptions[0].affordable,
+              "ordermenu: hides a route whose cost exceeds the ledger cap");
+        const auto freeOptions = MarchOptions(
+            w, s, -1, Potato::Campaign::MarchRules{0});
+        Check(freeOptions.size() == 2 &&
+                  freeOptions[0].supply == 0 &&
+                  freeOptions[0].affordable &&
+                  freeOptions[1].supply == 0 &&
+                  freeOptions[1].affordable,
+              "ordermenu: zero-cost marches remain affordable with debt");
+
+        WorldState negativeState = WorldState::Init(w, 7).value;
+        Ledger negativeLedger;
+        const auto negativeMarch = IssueMarch(
+            negativeState, w, negativeLedger, "b",
+            Potato::Campaign::MarchRules{-1});
+        Check(!negativeMarch.ok() && !negativeState.Marching() &&
+                  negativeState.Pending().empty() &&
+                  negativeState.SeqCounter() == 0 &&
+                  negativeLedger.Size() == 0,
+              "march: rejects negative rate before mutating state or ledger");
+
+        WorldState cappedState = WorldState::Init(w, 8).value;
+        Ledger cappedLedger;
+        const auto cappedMarch = IssueMarch(
+            cappedState, w, cappedLedger, "b", nearCap);
+        Check(!cappedMarch.ok() && !cappedState.Marching() &&
+                  cappedState.Pending().empty() &&
+                  cappedState.SeqCounter() == 0 &&
+                  cappedLedger.Size() == 0,
+              "march: rejects supply cost above ledger cap atomically");
+        WorldState overflowState = WorldState::Init(w, 10).value;
+        Ledger overflowLedger;
+        const auto overflowMarch = IssueMarch(
+            overflowState, w, overflowLedger, "b",
+            Potato::Campaign::MarchRules{
+                std::numeric_limits<std::int64_t>::max()});
+        Check(!overflowMarch.ok() && !overflowState.Marching() &&
+                  overflowState.Pending().empty() &&
+                  overflowState.SeqCounter() == 0 &&
+                  overflowLedger.Size() == 0,
+              "march: rejects overflowing supply cost before multiplication");
+
+        WorldState freeState = WorldState::Init(w, 9).value;
+        Ledger freeLedger;
+        const auto freeMarch = IssueMarch(
+            freeState, w, freeLedger, "b",
+            Potato::Campaign::MarchRules{0});
+        Check(freeMarch.ok() && freeMarch.value.supply == 0 &&
+                  freeState.Marching() && freeLedger.Size() == 0,
+              "march: zero supply rate remains a valid explicit rule");
+    }
     // ---------- RosterList / BuildCharacter ----------
     {
         const fs::path dir = TestDir();

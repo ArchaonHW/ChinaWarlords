@@ -26,8 +26,11 @@ MarchOptions(const WorldMap& map, const WorldState& ws,
         o.nodeId = map.NodeAt(idx).id;
         o.name = map.NodeAt(idx).name;
         o.days = days;
-        o.supply = days * rules.supplyPerDay;
-        o.affordable = o.supply > 0 && supplyAvailable >= o.supply;
+        const auto supplyCost =
+            Campaign::CalculateMarchSupplyCost(days, rules);
+        if (!supplyCost.ok()) continue;
+        o.supply = supplyCost.value;
+        o.affordable = o.supply == 0 || supplyAvailable >= o.supply;
         out.push_back(std::move(o));
     }
     return out;

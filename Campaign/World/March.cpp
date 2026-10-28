@@ -11,6 +11,22 @@ namespace Potato::Campaign {
 
 using Gameplay::Result;
 
+Result<std::int64_t> CalculateMarchSupplyCost(
+    std::int64_t days, const MarchRules& rules) {
+    if (days <= 0 || rules.supplyPerDay < 0) {
+        return Gameplay::Fail<std::int64_t>(
+            "march_supply",
+            "march days must be positive and daily supply nonnegative");
+    }
+    if (rules.supplyPerDay == 0) return Gameplay::Ok<std::int64_t>(0);
+    if (days > Ledger::MAX_AMOUNT / rules.supplyPerDay) {
+        return Gameplay::Fail<std::int64_t>(
+            "march_supply",
+            "march supply cost exceeds the ledger amount limit");
+    }
+    return Gameplay::Ok(days * rules.supplyPerDay);
+}
+
 Result<MarchPlan> IssueMarch(WorldState& ws, const WorldMap& map,
                              Ledger& ledger, std::string_view dest,
                              const MarchRules& rules) {
@@ -41,7 +57,11 @@ Result<MarchPlan> IssueMarch(WorldState& ws, const WorldMap& map,
     // 欠帳行軍：物資可負——affordability 是呈現層的事
     // （MarchOptions.affordable），sim 只負責記帳。軍隊開拔，
     // 帳本照記，管它能不能活到目的地。
-    const std::int64_t supply = days * rules.supplyPerDay;
+    const auto supplyCost = CalculateMarchSupplyCost(days, rules);
+    if (!supplyCost.ok()) {
+        return Gameplay::Fail<MarchPlan>(supplyCost.error, supplyCost.reason);
+    }
+    const std::int64_t supply = supplyCost.value;
     // Enqueue's fallible conditions are preflighted here (node
     // exists, day >= Day() by construction, queue under cap) so the
     // ledger post below can't strand without its arrival event.
